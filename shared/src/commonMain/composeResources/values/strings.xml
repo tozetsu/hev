@@ -24,6 +24,7 @@
     <string name="loading">Loading…</string>
 
     <!-- Home -->
+    <string name="decide">Decide</string>
     <string name="provider">Provider</string>
     <string name="provider_not_configured">Not configured</string>
     <string name="label_state">State / Context</string>

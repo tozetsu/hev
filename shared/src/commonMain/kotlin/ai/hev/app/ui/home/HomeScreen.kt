@@ -82,11 +82,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
+/** A null [onOpenSettings] or [onOpenHistory] hides that action; the navigation rail offers it instead. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onOpenSettings: () -> Unit,
-    onOpenHistory: () -> Unit,
+    onOpenSettings: (() -> Unit)?,
+    onOpenHistory: (() -> Unit)?,
     onResult: (Long) -> Unit,
 ) {
     val repo = LocalAppGraph.current.repository
@@ -103,11 +104,15 @@ fun HomeScreen(
                     Text(stringResource(Res.string.app_name), fontWeight = FontWeight.SemiBold)
                 },
                 actions = {
-                    IconButton(onClick = onOpenHistory) {
-                        Icon(HevIcons.History, contentDescription = stringResource(Res.string.cd_history))
+                    onOpenHistory?.let {
+                        IconButton(onClick = it) {
+                            Icon(HevIcons.History, contentDescription = stringResource(Res.string.cd_history))
+                        }
                     }
-                    IconButton(onClick = onOpenSettings) {
-                        Icon(HevIcons.Settings, contentDescription = stringResource(Res.string.cd_settings))
+                    onOpenSettings?.let {
+                        IconButton(onClick = it) {
+                            Icon(HevIcons.Settings, contentDescription = stringResource(Res.string.cd_settings))
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

@@ -65,10 +65,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
+/** A null [onBack] hides the back button, for when the navigation rail opened this screen. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     onOpen: (Long) -> Unit,
 ) {
     val repo = LocalAppGraph.current.repository
@@ -81,8 +82,10 @@ fun HistoryScreen(
             TopAppBar(
                 title = { Text(stringResource(Res.string.history)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(HevIcons.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
+                    onBack?.let {
+                        IconButton(onClick = it) {
+                            Icon(HevIcons.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
+                        }
                     }
                 },
                 actions = {

@@ -13,6 +13,12 @@ import androidx.compose.ui.unit.dp
 object HevIcons {
     val Add by icon("M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z")
     val ArrowBack by icon("M20 11H7.83l5.59-5.59L12 4l-8 8l8 8l1.41-1.41L7.83 13H20v-2Z", autoMirror = true)
+    val Balance by icon(
+        "M13 7.83c.85-.3 1.53-.98 1.83-1.83H18l-3 7c0 1.66 1.57 3 3.5 3s3.5-1.34 3.5-3l-3-7h2V4h-6.17" +
+            "C14.42 2.83 13.31 2 12 2S9.58 2.83 9.17 4L3 4v2h2l-3 7c0 1.66 1.57 3 3.5 3S9 14.66 9 13L6 6h3.17" +
+            "c.3 .85 .98 1.53 1.83 1.83V19H2v2h20v-2h-9V7.83ZM20.37 13h-3.74l1.87-4.36L20.37 13ZM7.37 13H3.63" +
+            "L5.5 8.64L7.37 13ZM12 6c-.55 0-1-.45-1-1c0-.55 .45-1 1-1s1 .45 1 1C13 5.55 12.55 6 12 6Z",
+    )
     val Check by icon("M9 16.17L4.83 12l-1.42 1.41L9 19L21 7l-1.41-1.41L9 16.17Z")
     val CheckCircle by icon(
         "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2ZM12 20c-4.41 0-8-3.59-8-8" +

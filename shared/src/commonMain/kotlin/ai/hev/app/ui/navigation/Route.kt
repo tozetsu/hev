@@ -1,7 +1,12 @@
 package ai.hev.app.ui.navigation
 
 import androidx.navigation3.runtime.NavKey
+import androidx.savedstate.serialization.SavedStateConfiguration
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclassesOfSealed
 
 /** Every screen and the arguments it opens with. */
 @Serializable
@@ -27,4 +32,12 @@ sealed interface Route : NavKey {
 
     @Serializable
     data class HistoryDetail(val historyId: Long) : Route
+}
+
+/** Routes are saved by their serializers, which non-Android targets cannot find by reflection. */
+@OptIn(ExperimentalSerializationApi::class)
+internal val RouteSaving = SavedStateConfiguration {
+    serializersModule = SerializersModule {
+        polymorphic(NavKey::class) { subclassesOfSealed<Route>() }
+    }
 }

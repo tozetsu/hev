@@ -76,10 +76,11 @@ private val AccentSwatches = listOf(
     AccentSwatch(Color(0xFF34D399)),
 )
 
+/** A null [onBack] hides the back button, for when the navigation rail opened this screen. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)?,
     onOpenProviders: () -> Unit,
 ) {
     val themeStore = LocalAppGraph.current.themeStore
@@ -90,8 +91,10 @@ fun SettingsScreen(
             TopAppBar(
                 title = { Text(stringResource(Res.string.settings)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(HevIcons.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
+                    onBack?.let {
+                        IconButton(onClick = it) {
+                            Icon(HevIcons.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
