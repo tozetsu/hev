@@ -1,7 +1,5 @@
 package ai.hev.app.domain.decision
 
-import java.io.IOException
-
 /** Why a decision request failed. */
 sealed class DecisionError(message: String, cause: Throwable? = null) : Exception(message, cause) {
 
@@ -20,7 +18,8 @@ sealed class DecisionError(message: String, cause: Throwable? = null) : Exceptio
     class GatewayTimeout(status: Int, detail: String) : Http(status, detail)
     class Server(status: Int, detail: String) : Http(status, detail)
 
-    class Network(cause: IOException) : DecisionError(cause.message ?: cause.javaClass.simpleName, cause)
+    /** The request never got an HTTP answer: no connection, a timeout, or a dropped response. */
+    class Network(cause: Throwable) : DecisionError(cause.message ?: cause::class.simpleName.orEmpty(), cause)
 
     /** The response did not match the protocol. */
     class MalformedResponse(detail: String, cause: Throwable? = null) : DecisionError(detail, cause)

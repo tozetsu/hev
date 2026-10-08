@@ -18,7 +18,7 @@ import io.ktor.http.isSuccess
 import io.ktor.http.withCharset
 import io.ktor.utils.io.charsets.Charsets
 import kotlinx.coroutines.delay
-import java.io.IOException
+import kotlinx.io.IOException
 import kotlin.time.Duration.Companion.seconds
 
 /**

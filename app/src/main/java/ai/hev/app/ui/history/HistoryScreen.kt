@@ -51,10 +51,8 @@ import ai.hev.app.domain.history.HistoryEntry
 import ai.hev.app.ui.components.formatConfidence
 import ai.hev.app.ui.components.formatPercent
 import ai.hev.app.ui.components.formatScore
+import ai.hev.app.ui.components.formatTimestamp
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,7 +64,6 @@ fun HistoryScreen(
     val items by repo.history.collectAsStateWithLifecycle(initialValue = emptyList())
     var confirmClear by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    val fmt = remember { SimpleDateFormat("MM-dd HH:mm", Locale.getDefault()) }
 
     Scaffold(
         topBar = {
@@ -133,7 +130,7 @@ fun HistoryScreen(
                     ) {
                         HistoryRow(
                             entry = entry,
-                            timeText = fmt.format(Date(entry.createdAt)),
+                            timeText = formatTimestamp(entry.createdAt),
                             onClick = { onOpen(entry.id) },
                         )
                     }

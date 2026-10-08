@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
+import kotlin.uuid.Uuid
 
 class ProviderEditViewModel(
     private val repo: HevRepository,
@@ -24,7 +24,7 @@ class ProviderEditViewModel(
 
     private val _state = MutableStateFlow(
         ProviderEditState.of(
-            config = existing ?: ProviderPresets.TypeSafe.newProvider(UUID.randomUUID().toString()),
+            config = existing ?: ProviderPresets.TypeSafe.newProvider(Uuid.random().toString()),
             isNew = existing == null,
         ),
     )

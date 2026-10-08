@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import kotlin.time.Clock
 
 class HevRepository(
     private val client: DecisionClient,
@@ -37,7 +38,7 @@ class HevRepository(
     suspend fun decide(provider: ProviderConfig, request: DecisionRequest): Long {
         val result = client.decide(provider.protocol, provider.endpoint, provider.apiKey, request)
         val entry = HistoryEntry(
-            createdAt = System.currentTimeMillis(),
+            createdAt = Clock.System.now().toEpochMilliseconds(),
             kind = request.kind,
             instructions = request.instructions,
             context = request.context,

@@ -2,12 +2,12 @@ package ai.hev.app.data.remote
 
 import ai.hev.app.data.remote.http.HttpTransport
 import ai.hev.app.domain.decision.DecisionError
+import ai.hev.app.domain.provider.Endpoints
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /** Lists the model ids a vendor's models endpoint offers. */
 class ModelCatalog(private val transport: HttpTransport = HttpTransport()) {
@@ -23,11 +23,8 @@ class ModelCatalog(private val transport: HttpTransport = HttpTransport()) {
          * An absolute [modelsUrl] is used as is; a relative one (e.g. `/api/tags`) is resolved
          * against [endpoint] the way a browser resolves a link.
          */
-        fun resolve(modelsUrl: String, endpoint: String): String? {
-            val target = modelsUrl.trim().ifEmpty { return null }
-            target.toHttpUrlOrNull()?.let { return it.toString() }
-            return endpoint.trim().toHttpUrlOrNull()?.resolve(target)?.toString()
-        }
+        fun resolve(modelsUrl: String, endpoint: String): String? =
+            modelsUrl.trim().ifEmpty { null }?.let { Endpoints.resolve(endpoint, it) }
 
         /**
          * Reads `{"models": [...]}` (TypeSafe, Ollama) or `{"data": [...]}` (OpenAI style, OpenRouter).

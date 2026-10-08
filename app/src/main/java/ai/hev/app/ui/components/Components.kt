@@ -25,7 +25,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ai.hev.app.ui.theme.BarTrack
 import ai.hev.app.ui.theme.Teal
-import java.util.Locale
 
 @Composable
 fun ProbabilityBar(
@@ -54,7 +53,7 @@ fun ProbabilityBar(
             )
             Spacer(Modifier.width(12.dp))
             Text(
-                text = String.format(Locale.US, "%.1f%%", pct),
+                text = "${formatFixed(pct, decimals = 1)}%",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Medium,
                 color = if (highlighted) Teal else MaterialTheme.colorScheme.onSurfaceVariant,

@@ -13,6 +13,7 @@ okhttp = "5.5.0"
 serialization = "1.11.0"
 securityCrypto = "1.1.0-alpha06"
 coroutines = "1.11.0"
+datetime = "0.8.0"
 appcompat = "1.7.0"
 junit = "4.13.2"
 robolectric = "4.14.1"
@@ -38,6 +39,7 @@ androidx-security-crypto = { group = "androidx.security", name = "security-crypt
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
+kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "datetime" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
