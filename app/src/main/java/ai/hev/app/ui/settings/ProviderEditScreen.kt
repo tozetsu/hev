@@ -11,18 +11,25 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -35,15 +42,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import ai.hev.app.HevApp
 import ai.hev.app.R
-import ai.hev.app.domain.provider.Endpoints
+import ai.hev.app.domain.provider.DecisionProtocol
+import ai.hev.app.domain.provider.ProviderPreset
 import ai.hev.app.domain.provider.ProviderPresets
 import ai.hev.app.ui.navigation.Routes
-import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,47 +62,31 @@ fun ProviderEditScreen(
     onBack: () -> Unit,
 ) {
     val repo = (LocalContext.current.applicationContext as HevApp).container.repository
-    val isNew = providerId == Routes.NEW_PROVIDER
-    val existing = if (isNew) null else repo.providers.value.firstOrNull { it.id == providerId }
-    val base = remember { existing ?: ProviderPresets.TypeSafe.newProvider(UUID.randomUUID().toString()) }
-
-    var name by remember { mutableStateOf(existing?.name ?: "") }
-    var endpoint by remember { mutableStateOf(base.endpoint) }
-    var apiKey by remember { mutableStateOf(base.apiKey) }
-    var model by remember { mutableStateOf(base.model) }
-    var showKey by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
+    val vm: ProviderEditViewModel = viewModel(
+        key = providerId,
+        factory = ProviderEditViewModel.factory(repo, providerId.takeUnless { it == Routes.NEW_PROVIDER }),
+    )
+    val state by vm.state.collectAsStateWithLifecycle()
     var confirmDelete by remember { mutableStateOf(false) }
-
-    val errName = stringResource(R.string.error_name_required)
-    val errEndpoint = stringResource(R.string.error_endpoint_invalid)
-    val errModel = stringResource(R.string.error_model_required)
 
     Scaffold(
         contentWindowInsets = WindowInsets.safeContent,
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        if (isNew) stringResource(R.string.provider_new)
-                        else stringResource(R.string.provider_edit),
-                    )
-                },
+                title = { Text(stringResource(if (state.isNew) R.string.provider_new else R.string.provider_edit)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
                 actions = {
-                    if (!isNew) {
+                    if (!state.isNew) {
                         IconButton(onClick = { confirmDelete = true }) {
                             Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.cd_delete))
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                ),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
     ) { padding ->
@@ -102,85 +96,54 @@ fun ProviderEditScreen(
                 .padding(padding)
                 .consumeWindowInsets(padding)
                 .imePadding(),
-            contentPadding = PaddingValues(20.dp),
+            contentPadding = PaddingValues(vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(stringResource(R.string.label_name)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
+                PresetChips(selected = state.preset, onSelect = vm::selectPreset)
+            }
+            if (state.isCustom) {
+                item {
+                    ProtocolSelector(
+                        selected = state.protocol,
+                        onSelect = vm::setProtocol,
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                    )
+                }
+            }
+            item {
+                Field(state.name, vm::setName, R.string.label_name)
+            }
+            item {
+                Field(state.endpoint, vm::setEndpoint, R.string.label_endpoint, keyboardType = KeyboardType.Uri)
+            }
+            if (state.isCustom) {
+                item {
+                    Field(state.modelsUrl, vm::setModelsUrl, R.string.label_models_url, keyboardType = KeyboardType.Uri)
+                }
+            }
+            item {
+                SecretField(
+                    value = state.apiKey,
+                    onValueChange = vm::setApiKey,
+                    label = if (state.apiKeyRequired) R.string.label_api_key else R.string.label_api_key_optional,
                 )
             }
             item {
-                OutlinedTextField(
-                    value = endpoint,
-                    onValueChange = { endpoint = it },
-                    label = { Text(stringResource(R.string.label_endpoint)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                )
+                Field(state.model, vm::setModel, R.string.label_model)
             }
             item {
-                OutlinedTextField(
-                    value = apiKey,
-                    onValueChange = { apiKey = it },
-                    label = { Text(stringResource(R.string.label_api_key)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    visualTransformation = if (showKey) VisualTransformation.None
-                    else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        TextButton(onClick = { showKey = !showKey }) {
-                            Text(
-                                if (showKey) stringResource(R.string.action_hide)
-                                else stringResource(R.string.action_show),
-                            )
-                        }
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                )
-            }
-            item {
-                OutlinedTextField(
-                    value = model,
-                    onValueChange = { model = it },
-                    label = { Text(stringResource(R.string.label_model)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                )
-            }
-            item {
-                if (error != null) {
-                    Text(error!!, color = MaterialTheme.colorScheme.error)
+                state.error?.let {
+                    Text(
+                        text = stringResource(it),
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
+                    )
                 }
                 Button(
-                    onClick = {
-                        when {
-                            name.isBlank() -> error = errName
-                            !Endpoints.isValid(endpoint) -> error = errEndpoint
-                            model.isBlank() -> error = errModel
-                            else -> {
-                                val cfg = base.copy(
-                                    name = name.trim(),
-                                    endpoint = endpoint.trim(),
-                                    apiKey = apiKey.trim(),
-                                    model = model.trim(),
-                                )
-                                repo.upsertProvider(cfg)
-                                if (isNew || repo.activeProvider() == null) {
-                                    repo.setActiveProvider(cfg.id)
-                                }
-                                onBack()
-                            }
-                        }
-                    },
+                    onClick = { if (vm.save()) onBack() },
                     modifier = Modifier
+                        .padding(horizontal = 20.dp)
                         .fillMaxWidth()
                         .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
@@ -191,14 +154,14 @@ fun ProviderEditScreen(
         }
     }
 
-    if (confirmDelete && existing != null) {
+    if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
             title = { Text(stringResource(R.string.delete_provider_title)) },
-            text = { Text(stringResource(R.string.delete_provider_message, existing.name)) },
+            text = { Text(stringResource(R.string.delete_provider_message, state.name)) },
             confirmButton = {
                 TextButton(onClick = {
-                    repo.deleteProvider(existing.id)
+                    vm.delete()
                     confirmDelete = false
                     onBack()
                 }) { Text(stringResource(R.string.action_delete)) }
@@ -208,4 +171,96 @@ fun ProviderEditScreen(
             },
         )
     }
+}
+
+@Composable
+private fun PresetChips(selected: ProviderPreset?, onSelect: (ProviderPreset?) -> Unit) {
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 20.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(ProviderPresets.all, key = { it.id }) { preset ->
+            FilterChip(
+                selected = preset == selected,
+                onClick = { onSelect(preset) },
+                label = { Text(preset.name) },
+            )
+        }
+        item(key = "custom") {
+            FilterChip(
+                selected = selected == null,
+                onClick = { onSelect(null) },
+                label = { Text(stringResource(R.string.preset_custom)) },
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProtocolSelector(
+    selected: DecisionProtocol,
+    onSelect: (DecisionProtocol) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val protocols = DecisionProtocol.entries
+    SingleChoiceSegmentedButtonRow(modifier = modifier.fillMaxWidth()) {
+        protocols.forEachIndexed { index, protocol ->
+            SegmentedButton(
+                selected = protocol == selected,
+                onClick = { onSelect(protocol) },
+                shape = SegmentedButtonDefaults.itemShape(index, protocols.size),
+            ) {
+                Text(stringResource(protocol.labelRes))
+            }
+        }
+    }
+}
+
+private val DecisionProtocol.labelRes: Int
+    get() = when (this) {
+        DecisionProtocol.SystemOne -> R.string.protocol_system_one
+        DecisionProtocol.OpenAiDecisions -> R.string.protocol_openai_decisions
+    }
+
+@Composable
+private fun Field(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: Int,
+    keyboardType: KeyboardType = KeyboardType.Text,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(stringResource(label)) },
+        modifier = Modifier
+            .padding(horizontal = 20.dp)
+            .fillMaxWidth(),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        shape = RoundedCornerShape(12.dp),
+    )
+}
+
+@Composable
+private fun SecretField(value: String, onValueChange: (String) -> Unit, label: Int) {
+    var visible by remember { mutableStateOf(false) }
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(stringResource(label)) },
+        modifier = Modifier
+            .padding(horizontal = 20.dp)
+            .fillMaxWidth(),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+        visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
+        trailingIcon = {
+            TextButton(onClick = { visible = !visible }) {
+                Text(stringResource(if (visible) R.string.action_hide else R.string.action_show))
+            }
+        },
+        shape = RoundedCornerShape(12.dp),
+    )
 }

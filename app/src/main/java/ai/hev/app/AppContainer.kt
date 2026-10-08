@@ -2,7 +2,6 @@ package ai.hev.app
 
 import android.content.Context
 import ai.hev.app.data.local.db.HevDatabase
-import ai.hev.app.data.local.prefs.LanguageStore
 import ai.hev.app.data.local.prefs.ProviderStore
 import ai.hev.app.data.local.prefs.ThemeStore
 import ai.hev.app.data.remote.DecisionClient
@@ -13,7 +12,6 @@ class AppContainer(context: Context) {
     private val providerStore = ProviderStore(context)
 
     val themeStore = ThemeStore(context)
-    val languageStore = LanguageStore(context)
 
     val repository = HevRepository(
         client = DecisionClient(),

@@ -70,4 +70,22 @@ class DecisionDraftTest {
         assertEquals(Question.Score(listOf("Low", "High")), request.question)
         assertEquals("ctx", request.state)
     }
+
+    @Test
+    fun `changing kind resets items, keeping it does not`() {
+        val draft = choice("x", "y")
+        assertEquals(draft, draft.withKind(DecisionKind.Choice))
+        assertEquals(DecisionItems.initial(DecisionKind.Score), draft.withKind(DecisionKind.Score).items)
+    }
+
+    @Test
+    fun `unsupported kind falls back to the first supported one`() {
+        val yesNo = DecisionDraft(DecisionKind.YesNo, "Is it?", "ctx", emptyList())
+
+        val fitted = yesNo.fittedTo(narrow)
+
+        assertEquals(DecisionKind.Choice, fitted.kind)
+        assertEquals("Is it?", fitted.instructions)
+        assertEquals(yesNo, yesNo.fittedTo(ModelCapabilities.Lenient))
+    }
 }

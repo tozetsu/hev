@@ -23,7 +23,6 @@ import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -52,7 +51,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ai.hev.app.HevApp
 import ai.hev.app.R
-import ai.hev.app.data.local.prefs.AppLanguage
 import ai.hev.app.data.local.prefs.ThemeMode
 
 private data class AccentSwatch(val color: Color)
@@ -76,10 +74,8 @@ fun SettingsScreen(
 ) {
     val container = (LocalContext.current.applicationContext as HevApp).container
     val themeStore = container.themeStore
-    val languageStore = container.languageStore
     val themeMode by themeStore.themeMode.collectAsStateWithLifecycle()
     val accentArgb by themeStore.accentArgb.collectAsStateWithLifecycle()
-    val appLanguage by languageStore.language.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -185,42 +181,6 @@ fun SettingsScreen(
                                     modifier = Modifier.weight(1f),
                                 )
                             }
-                        }
-                    }
-                }
-            }
-            item {
-                SectionLabel(icon = Icons.Outlined.Language, title = stringResource(R.string.section_language))
-                Spacer(Modifier.height(8.dp))
-                Card(
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            ThemeModeChip(
-                                label = stringResource(R.string.language_system),
-                                selected = appLanguage == AppLanguage.SYSTEM,
-                                onClick = { languageStore.setLanguage(AppLanguage.SYSTEM) },
-                                modifier = Modifier.weight(1f),
-                            )
-                            ThemeModeChip(
-                                label = stringResource(R.string.language_en),
-                                selected = appLanguage == AppLanguage.EN,
-                                onClick = { languageStore.setLanguage(AppLanguage.EN) },
-                                modifier = Modifier.weight(1f),
-                            )
                         }
                     }
                 }

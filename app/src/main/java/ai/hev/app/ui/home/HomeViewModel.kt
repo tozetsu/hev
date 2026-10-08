@@ -9,11 +9,11 @@ import ai.hev.app.R
 import ai.hev.app.data.repository.HevRepository
 import ai.hev.app.domain.decision.DecisionDraft
 import ai.hev.app.domain.decision.DecisionError
-import ai.hev.app.domain.provider.Endpoints
 import ai.hev.app.domain.decision.DecisionItems
 import ai.hev.app.domain.decision.DecisionKind
 import ai.hev.app.domain.decision.ModelCapabilities
 import ai.hev.app.domain.decision.parseStructuredOptionLines
+import ai.hev.app.domain.provider.Endpoints
 import ai.hev.app.domain.provider.ProviderConfig
 import ai.hev.app.ui.common.message
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,11 +59,12 @@ class HomeViewModel(
         repo.providers,
         repo.activeProviderId,
     ) { f, providers, activeId ->
+        val capabilities = ModelCapabilities.Lenient
         HomeUiState(
-            draft = f.draft,
+            draft = f.draft.fittedTo(capabilities),
             providers = providers,
             activeProvider = providers.firstOrNull { it.id == activeId } ?: providers.firstOrNull(),
-            capabilities = ModelCapabilities.Lenient,
+            capabilities = capabilities,
             loading = f.loading,
             error = f.error,
         )
@@ -71,9 +72,7 @@ class HomeViewModel(
 
     private val context get() = getApplication<Application>()
 
-    fun setKind(kind: DecisionKind) = editDraft {
-        if (it.kind == kind) it else it.copy(kind = kind, items = DecisionItems.initial(kind))
-    }
+    fun setKind(kind: DecisionKind) = editDraft { it.withKind(kind) }
 
     fun setContext(value: String) = editDraft { it.copy(context = value) }
     fun setInstructions(value: String) = editDraft { it.copy(instructions = value) }
@@ -132,8 +131,11 @@ class HomeViewModel(
         }
     }
 
-    private fun editDraft(transform: (DecisionDraft) -> DecisionDraft) =
-        form.update { it.copy(draft = transform(it.draft), error = null) }
+    /** Edits the draft as shown, i.e. already fitted to the active model. */
+    private fun editDraft(transform: (DecisionDraft) -> DecisionDraft) {
+        val capabilities = uiState.value.capabilities
+        form.update { it.copy(draft = transform(it.draft.fittedTo(capabilities)), error = null) }
+    }
 
     companion object {
         fun factory(app: Application, repo: HevRepository) = object : ViewModelProvider.Factory {

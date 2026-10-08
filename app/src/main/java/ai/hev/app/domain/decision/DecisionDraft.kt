@@ -20,6 +20,14 @@ data class DecisionDraft(
         }
     }
 
+    /** This draft with [kind]; items start over when the kind changes. */
+    fun withKind(kind: DecisionKind): DecisionDraft =
+        if (kind == this.kind) this else copy(kind = kind, items = DecisionItems.initial(kind))
+
+    /** Moves to the first supported kind when [capabilities] do not accept the current one. */
+    fun fittedTo(capabilities: ModelCapabilities): DecisionDraft =
+        if (capabilities.supports(kind)) this else withKind(DecisionKind.entries.first(capabilities::supports))
+
     fun toRequest(model: String): DecisionRequest = DecisionRequest(
         model = model,
         instructions = instructions.trim(),

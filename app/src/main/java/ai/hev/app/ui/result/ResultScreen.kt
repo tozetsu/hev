@@ -31,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -173,6 +174,7 @@ fun ResultContent(entry: HistoryEntry, modifier: Modifier = Modifier) {
             val meta = listOfNotNull(
                 entry.providerName?.takeIf { it.isNotBlank() },
                 entry.model?.takeIf { it.isNotBlank() },
+                entry.inputTokens?.let { pluralStringResource(R.plurals.input_tokens, it, it) },
             )
             if (meta.isNotEmpty()) {
                 Text(
