@@ -1,10 +1,18 @@
 package ai.hev.app.domain.provider
 
+import ai.hev.app.domain.decision.DecisionKind
+import ai.hev.app.domain.decision.ModelCapabilities
 import ai.hev.app.domain.provider.DecisionProtocol.OpenAiDecisions
 import ai.hev.app.domain.provider.DecisionProtocol.SystemOne
 
-/** Built-in vendor presets, in display order. */
+/**
+ * Built-in vendor presets, in display order. Capabilities record documented limits only;
+ * vendors without published limits keep [ModelCapabilities.Lenient].
+ */
 object ProviderPresets {
+
+    private fun limits(choiceOptions: IntRange, scoreLevels: IntRange) =
+        ModelCapabilities(DecisionKind.entries.toSet(), choiceOptions, scoreLevels)
 
     val TypeSafe = ProviderPreset(
         id = "typesafe",
@@ -29,6 +37,7 @@ object ProviderPresets {
         protocol = SystemOne,
         endpoint = "https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/systemone",
         models = listOf("decision-model-preview"),
+        capabilities = limits(choiceOptions = 2..255, scoreLevels = 2..255),
     )
 
     val AlibabaSingapore = ProviderPreset(
@@ -37,6 +46,7 @@ object ProviderPresets {
         protocol = SystemOne,
         endpoint = "https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1/systemone",
         models = listOf("decision-model-preview"),
+        capabilities = limits(choiceOptions = 2..255, scoreLevels = 2..255),
     )
 
     val OpenRouter = ProviderPreset(
@@ -64,6 +74,7 @@ object ProviderPresets {
         endpoint = "https://api.deepinfra.com/v1/decisions",
         modelsUrl = "https://api.deepinfra.com/typesafe/v1/models",
         models = listOf("typesafe/jev"),
+        capabilities = limits(choiceOptions = 2..52, scoreLevels = 2..10),
     )
 
     val Liquid = ProviderPreset(
@@ -82,6 +93,7 @@ object ProviderPresets {
         modelsUrl = "/api/tags",
         models = listOf("nimble", "tev1", "clef", "clef-flash"),
         apiKeyRequired = false,
+        capabilities = limits(choiceOptions = 2..26, scoreLevels = 2..26),
     )
 
     val OpenAi = ProviderPreset(

@@ -59,11 +59,12 @@ class HomeViewModel(
         repo.providers,
         repo.activeProviderId,
     ) { f, providers, activeId ->
-        val capabilities = ModelCapabilities.Lenient
+        val active = providers.firstOrNull { it.id == activeId } ?: providers.firstOrNull()
+        val capabilities = active?.capabilities ?: ModelCapabilities.Lenient
         HomeUiState(
             draft = f.draft.fittedTo(capabilities),
             providers = providers,
-            activeProvider = providers.firstOrNull { it.id == activeId } ?: providers.firstOrNull(),
+            activeProvider = active,
             capabilities = capabilities,
             loading = f.loading,
             error = f.error,
