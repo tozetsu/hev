@@ -9,6 +9,7 @@ import ai.hev.app.R
 import ai.hev.app.data.repository.HevRepository
 import ai.hev.app.domain.decision.DecisionDraft
 import ai.hev.app.domain.decision.DecisionError
+import ai.hev.app.domain.provider.Endpoints
 import ai.hev.app.domain.decision.DecisionItems
 import ai.hev.app.domain.decision.DecisionKind
 import ai.hev.app.domain.decision.ModelCapabilities
@@ -110,8 +111,8 @@ class HomeViewModel(
         val provider = state.activeProvider
         val error = when {
             provider == null -> context.getString(R.string.error_configure_provider)
-            provider.baseUrl.isBlank() -> context.getString(R.string.error_endpoint)
-            provider.apiKey.isBlank() -> context.getString(R.string.error_api_key)
+            !Endpoints.isValid(provider.endpoint) -> context.getString(R.string.error_endpoint_invalid)
+            provider.requiresApiKey && provider.apiKey.isBlank() -> context.getString(R.string.error_api_key)
             else -> state.draft.validate(state.capabilities)?.message(context)
         }
         if (error != null || provider == null) {

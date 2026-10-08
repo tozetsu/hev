@@ -5,16 +5,13 @@ import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import ai.hev.app.domain.provider.ProviderConfig
+import ai.hev.app.domain.provider.ProviderPresets
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import java.util.UUID
 
 class ProviderStore(context: Context) {
-    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val prefs: SharedPreferences = createEncryptedPrefs(context)
 
     private val _providers = MutableStateFlow(loadProviders())
@@ -52,45 +49,20 @@ class ProviderStore(context: Context) {
 
     fun createDefaultIfEmpty() {
         if (_providers.value.isNotEmpty()) return
-        val def = ProviderConfig(
-            id = UUID.randomUUID().toString(),
-            name = "TypeSafe",
-            baseUrl = DEFAULT_BASE,
-            apiKey = "",
-            model = "jev-latest",
-        )
+        val def = ProviderPresets.TypeSafe.newProvider(UUID.randomUUID().toString())
         upsert(def)
         setActive(def.id)
     }
 
     private fun persist(list: List<ProviderConfig>) {
-        val stored = list.map {
-            StoredProvider(it.id, it.name, it.baseUrl, it.apiKey, it.model)
-        }
-        prefs.edit().putString(KEY_PROVIDERS, json.encodeToString(stored)).apply()
+        prefs.edit().putString(KEY_PROVIDERS, ProviderCodec.encode(list)).apply()
         _providers.value = list
     }
 
-    private fun loadProviders(): List<ProviderConfig> {
-        val raw = prefs.getString(KEY_PROVIDERS, null) ?: return emptyList()
-        return runCatching {
-            json.decodeFromString<List<StoredProvider>>(raw).map {
-                ProviderConfig(it.id, it.name, it.baseUrl, it.apiKey, it.model)
-            }
-        }.getOrElse { emptyList() }
-    }
-
-    @Serializable
-    private data class StoredProvider(
-        val id: String,
-        val name: String,
-        val baseUrl: String,
-        val apiKey: String,
-        val model: String,
-    )
+    private fun loadProviders(): List<ProviderConfig> =
+        prefs.getString(KEY_PROVIDERS, null)?.let(ProviderCodec::decode).orEmpty()
 
     companion object {
-        const val DEFAULT_BASE = "https://api.typesafe.ai/v1/systemone"
         private const val PREFS_NAME = "hev_secure_prefs"
         private const val KEY_PROVIDERS = "providers_json"
         private const val KEY_ACTIVE = "active_provider_id"

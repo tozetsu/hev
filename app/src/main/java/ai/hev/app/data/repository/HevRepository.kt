@@ -8,7 +8,6 @@ import ai.hev.app.domain.decision.ChoiceOption
 import ai.hev.app.domain.decision.DecisionRequest
 import ai.hev.app.domain.decision.Question
 import ai.hev.app.domain.history.HistoryEntry
-import ai.hev.app.domain.provider.DecisionProtocol
 import ai.hev.app.domain.provider.ProviderConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -34,7 +33,7 @@ class HevRepository(
 
     /** Sends [request] to [provider], stores the answer, and returns the new history id. */
     suspend fun decide(provider: ProviderConfig, request: DecisionRequest): Long {
-        val result = client.decide(DecisionProtocol.SystemOne, provider.baseUrl, provider.apiKey, request)
+        val result = client.decide(provider.protocol, provider.endpoint, provider.apiKey, request)
         val entry = HistoryEntry(
             createdAt = System.currentTimeMillis(),
             kind = request.kind,

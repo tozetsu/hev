@@ -40,8 +40,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import ai.hev.app.HevApp
 import ai.hev.app.R
-import ai.hev.app.data.local.prefs.ProviderStore
-import ai.hev.app.domain.provider.ProviderConfig
+import ai.hev.app.domain.provider.Endpoints
+import ai.hev.app.domain.provider.ProviderPresets
 import ai.hev.app.ui.navigation.Routes
 import java.util.UUID
 
@@ -54,17 +54,18 @@ fun ProviderEditScreen(
     val repo = (LocalContext.current.applicationContext as HevApp).container.repository
     val isNew = providerId == Routes.NEW_PROVIDER
     val existing = if (isNew) null else repo.providers.value.firstOrNull { it.id == providerId }
+    val base = remember { existing ?: ProviderPresets.TypeSafe.newProvider(UUID.randomUUID().toString()) }
 
     var name by remember { mutableStateOf(existing?.name ?: "") }
-    var endpoint by remember { mutableStateOf(existing?.baseUrl ?: ProviderStore.DEFAULT_BASE) }
-    var apiKey by remember { mutableStateOf(existing?.apiKey ?: "") }
-    var model by remember { mutableStateOf(existing?.model ?: "jev-latest") }
+    var endpoint by remember { mutableStateOf(base.endpoint) }
+    var apiKey by remember { mutableStateOf(base.apiKey) }
+    var model by remember { mutableStateOf(base.model) }
     var showKey by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var confirmDelete by remember { mutableStateOf(false) }
 
     val errName = stringResource(R.string.error_name_required)
-    val errEndpoint = stringResource(R.string.error_endpoint_required)
+    val errEndpoint = stringResource(R.string.error_endpoint_invalid)
     val errModel = stringResource(R.string.error_model_required)
 
     Scaffold(
@@ -162,13 +163,12 @@ fun ProviderEditScreen(
                     onClick = {
                         when {
                             name.isBlank() -> error = errName
-                            endpoint.isBlank() -> error = errEndpoint
+                            !Endpoints.isValid(endpoint) -> error = errEndpoint
                             model.isBlank() -> error = errModel
                             else -> {
-                                val cfg = ProviderConfig(
-                                    id = existing?.id ?: UUID.randomUUID().toString(),
+                                val cfg = base.copy(
                                     name = name.trim(),
-                                    baseUrl = endpoint.trim(),
+                                    endpoint = endpoint.trim(),
                                     apiKey = apiKey.trim(),
                                     model = model.trim(),
                                 )

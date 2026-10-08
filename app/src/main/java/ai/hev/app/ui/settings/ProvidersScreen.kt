@@ -137,7 +137,7 @@ private fun ProviderRow(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = provider.baseUrl,
+                    text = provider.endpoint,
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
