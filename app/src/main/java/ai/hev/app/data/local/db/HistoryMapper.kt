@@ -1,5 +1,6 @@
 package ai.hev.app.data.local.db
 
+import ai.hev.app.data.local.StorageKeys
 import ai.hev.app.domain.decision.ChoiceOption
 import ai.hev.app.domain.decision.DecisionKind
 import ai.hev.app.domain.decision.DecisionOutcome
@@ -21,7 +22,7 @@ object HistoryMapper {
         return HistoryEntity(
             id = entry.id,
             createdAt = entry.createdAt,
-            questionType = entry.kind.storageKey,
+            questionType = StorageKeys.of(entry.kind),
             question = entry.instructions,
             state = entry.context,
             optionsJson = json.encodeToString(itemsSerializer, entry.items.map { StoredItem(it.id, it.label) }),
@@ -34,15 +35,19 @@ object HistoryMapper {
             model = entry.model,
             providerName = entry.providerName,
             rawJson = entry.rawJson,
+            providerId = entry.providerId,
+            protocol = entry.protocol?.let(StorageKeys::of),
+            refused = outcome == DecisionOutcome.Refused,
+            inputTokens = entry.inputTokens,
         )
     }
 
     fun toDomain(entity: HistoryEntity): HistoryEntry {
-        val kind = kindOf(entity.questionType)
+        val kind = StorageKeys.kind(entity.questionType) ?: DecisionKind.Choice
         val probabilities = decodeOrDefault(entity.probabilitiesJson, emptyMap()) {
             json.decodeFromString(probabilitiesSerializer, it)
         }
-        val outcome = when (kind) {
+        val outcome = if (entity.refused) DecisionOutcome.Refused else when (kind) {
             DecisionKind.Choice -> entity.choice?.let {
                 DecisionOutcome.Choice(it, probabilities, entity.confidence)
             }
@@ -70,19 +75,11 @@ object HistoryMapper {
             model = entity.model,
             providerName = entity.providerName,
             rawJson = entity.rawJson,
+            providerId = entity.providerId,
+            protocol = StorageKeys.protocol(entity.protocol),
+            inputTokens = entity.inputTokens,
         )
     }
-
-    private val DecisionKind.storageKey: String
-        get() = when (this) {
-            DecisionKind.Choice -> "choice"
-            DecisionKind.Score -> "score"
-            DecisionKind.YesNo -> "noul"
-        }
-
-    /** Unknown or missing values are legacy choice rows. */
-    private fun kindOf(key: String?): DecisionKind =
-        DecisionKind.entries.firstOrNull { it.storageKey == key } ?: DecisionKind.Choice
 
     private fun DecisionOutcome?.probabilities(): Map<String, Double> = when (this) {
         is DecisionOutcome.Choice -> probabilities

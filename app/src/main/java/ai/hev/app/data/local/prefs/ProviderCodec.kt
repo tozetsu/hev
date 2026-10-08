@@ -1,5 +1,6 @@
 package ai.hev.app.data.local.prefs
 
+import ai.hev.app.data.local.StorageKeys
 import ai.hev.app.domain.provider.DecisionProtocol
 import ai.hev.app.domain.provider.ProviderConfig
 import ai.hev.app.domain.provider.ProviderPresets
@@ -24,7 +25,7 @@ internal object ProviderCodec {
                 baseUrl = it.endpoint,
                 apiKey = it.apiKey,
                 model = it.model,
-                protocol = it.protocol.storageKey,
+                protocol = StorageKeys.of(it.protocol),
                 presetId = it.presetId,
                 modelsUrl = it.modelsUrl,
             )
@@ -52,7 +53,7 @@ internal object ProviderCodec {
         return ProviderConfig(
             id = id,
             name = name,
-            protocol = DecisionProtocol.entries.firstOrNull { it.storageKey == protocol } ?: DecisionProtocol.SystemOne,
+            protocol = StorageKeys.protocol(protocol) ?: DecisionProtocol.SystemOne,
             endpoint = baseUrl,
             apiKey = apiKey,
             model = model,
@@ -60,12 +61,6 @@ internal object ProviderCodec {
             modelsUrl = modelsUrl,
         )
     }
-
-    private val DecisionProtocol.storageKey: String
-        get() = when (this) {
-            DecisionProtocol.SystemOne -> "system_one"
-            DecisionProtocol.OpenAiDecisions -> "openai_decisions"
-        }
 
     /** `baseUrl` keeps its original key so older installs read their providers unchanged. */
     @Serializable

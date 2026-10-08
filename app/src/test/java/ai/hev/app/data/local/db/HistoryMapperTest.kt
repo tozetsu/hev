@@ -1,11 +1,10 @@
-package ai.hev.app.data.local
+package ai.hev.app.data.local.db
 
-import ai.hev.app.data.local.db.HistoryEntity
-import ai.hev.app.data.local.db.HistoryMapper
 import ai.hev.app.domain.decision.ChoiceOption
 import ai.hev.app.domain.decision.DecisionKind
 import ai.hev.app.domain.decision.DecisionOutcome
 import ai.hev.app.domain.history.HistoryEntry
+import ai.hev.app.domain.provider.DecisionProtocol
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -39,6 +38,12 @@ class HistoryMapperTest {
                 listOf(ChoiceOption("0", "L"), ChoiceOption("1", "M"), ChoiceOption("2", "H")),
             ),
             entry(DecisionKind.YesNo, DecisionOutcome.YesNo(0.4)),
+            entry(DecisionKind.Choice, DecisionOutcome.Refused, listOf(ChoiceOption("a", "A"), ChoiceOption("b", "B"))),
+            entry(DecisionKind.YesNo, DecisionOutcome.YesNo(0.7)).copy(
+                providerId = "p1",
+                protocol = DecisionProtocol.OpenAiDecisions,
+                inputTokens = 96,
+            ),
         ).forEach { original ->
             assertEquals(original, HistoryMapper.toDomain(HistoryMapper.toEntity(original)))
         }
@@ -63,5 +68,31 @@ class HistoryMapperTest {
         assertEquals(DecisionKind.Choice, entry.kind)
         assertEquals(emptyList<ChoiceOption>(), entry.items)
         assertNull(entry.outcome)
+        assertNull(entry.providerId)
+        assertNull(entry.protocol)
+        assertNull(entry.inputTokens)
+    }
+
+    @Test
+    fun `refusal and provider details are stored in their own columns`() {
+        val entity = HistoryMapper.toEntity(
+            entry(DecisionKind.Score, DecisionOutcome.Refused).copy(
+                providerId = "p1",
+                protocol = DecisionProtocol.SystemOne,
+                inputTokens = 12,
+            ),
+        )
+
+        assertEquals(true, entity.refused)
+        assertEquals("score", entity.questionType)
+        assertEquals("system_one", entity.protocol)
+        assertEquals("p1", entity.providerId)
+        assertEquals(12, entity.inputTokens)
+        assertNull(entity.score)
+    }
+
+    @Test
+    fun `yes-no is stored under its own key`() {
+        assertEquals("yes_no", HistoryMapper.toEntity(entry(DecisionKind.YesNo, DecisionOutcome.YesNo(0.4))).questionType)
     }
 }

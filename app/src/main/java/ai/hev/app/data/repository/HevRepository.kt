@@ -44,6 +44,9 @@ class HevRepository(
             model = result.model ?: request.model,
             providerName = provider.name,
             rawJson = result.rawJson,
+            providerId = provider.id,
+            protocol = provider.protocol,
+            inputTokens = result.usage.inputTokens,
         )
         return historyDao.insert(HistoryMapper.toEntity(entry))
     }

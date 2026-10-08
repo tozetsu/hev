@@ -1,9 +1,14 @@
 package ai.hev.app.data.local.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-/** Column names are kept from schema v2; [HistoryMapper] translates to the domain model. */
+/**
+ * A stored decision. Column names predate the domain model (`question` holds the instructions,
+ * `state` the context, `noul` the yes probability); [HistoryMapper] translates.
+ * Schema changes need a migration in [HevMigrations] and an exported schema.
+ */
 @Entity(tableName = "history")
 data class HistoryEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -20,4 +25,8 @@ data class HistoryEntity(
     val model: String?,
     val providerName: String?,
     val rawJson: String,
+    val providerId: String? = null,
+    val protocol: String? = null,
+    @ColumnInfo(defaultValue = "0") val refused: Boolean = false,
+    val inputTokens: Int? = null,
 )
