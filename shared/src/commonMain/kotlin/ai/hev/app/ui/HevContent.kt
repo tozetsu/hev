@@ -15,12 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
-/** The whole app over [graph], themed by the user's choice. */
+/** The whole app over [graph], themed by the user's choice; [systemDark] is what "System" follows. */
 @Composable
-fun HevContent(graph: AppGraph) {
+fun HevContent(graph: AppGraph, systemDark: Boolean = isSystemInDarkTheme()) {
     val theme by graph.themeStore.settings.collectAsStateWithLifecycle()
     val darkTheme = when (theme.mode) {
-        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.SYSTEM -> systemDark
         ThemeMode.DARK -> true
         ThemeMode.LIGHT -> false
     }

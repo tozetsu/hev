@@ -52,13 +52,13 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.androidx.sqlite.bundled)
         }
         jvmTest.dependencies {
             implementation(libs.junit)
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.okhttp.mockwebserver)
             implementation(libs.androidx.room.testing)
-            implementation(libs.androidx.sqlite.bundled)
         }
     }
 }
