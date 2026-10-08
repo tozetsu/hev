@@ -7,6 +7,7 @@ import ai.hev.app.domain.provider.ProviderIssue
 import ai.hev.app.resources.Res
 import ai.hev.app.resources.error_api_key
 import ai.hev.app.resources.error_endpoint_invalid
+import ai.hev.app.resources.error_keyring_locked
 import ai.hev.app.resources.error_http_status
 import ai.hev.app.resources.error_invalid_request
 import ai.hev.app.resources.error_kind_unsupported
@@ -69,5 +70,6 @@ fun ProviderIssue.text(): String = stringResource(
         ProviderIssue.InvalidEndpoint -> Res.string.error_endpoint_invalid
         ProviderIssue.MissingApiKey -> Res.string.error_api_key
         ProviderIssue.MissingModel -> Res.string.error_model_required
+        ProviderIssue.KeyringLocked -> Res.string.error_keyring_locked
     },
 )

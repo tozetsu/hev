@@ -6,4 +6,7 @@ enum class ProviderIssue {
     InvalidEndpoint,
     MissingApiKey,
     MissingModel,
+
+    /** The keyring holding API keys is locked. */
+    KeyringLocked,
 }

@@ -185,9 +185,8 @@ fun ProviderEditScreen(
             text = { Text(stringResource(Res.string.delete_provider_message, state.name)) },
             confirmButton = {
                 TextButton(onClick = {
-                    vm.delete()
                     confirmDelete = false
-                    onBack()
+                    if (vm.delete()) onBack()
                 }) { Text(stringResource(Res.string.action_delete)) }
             },
             dismissButton = {

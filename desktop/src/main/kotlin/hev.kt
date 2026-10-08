@@ -3,6 +3,7 @@
 
 import ai.hev.app.AppGraph
 import ai.hev.app.DesktopDirs
+import ai.hev.app.data.local.prefs.SecretStorageException
 import ai.hev.app.ui.HevContent
 import ai.hev.desktop.rememberPortalDarkTheme
 import ai.hev.desktop.rememberSavedWindowState
@@ -14,10 +15,11 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import org.jetbrains.compose.resources.painterResource
 import java.awt.Dimension
+import javax.swing.JOptionPane
 
 fun main() {
     val dirs = DesktopDirs.fromEnvironment()
-    val graph = AppGraph(dirs)
+    val graph = openGraph(dirs) ?: return
     application {
         Window(
             onCloseRequest = ::exitApplication,
@@ -31,6 +33,23 @@ fun main() {
     }
 }
 
+/** Opens the graph, offering to retry while the keyring stays locked; null when the user quits instead. */
+private fun openGraph(dirs: DesktopDirs): AppGraph? {
+    while (true) {
+        try {
+            return AppGraph(dirs)
+        } catch (e: SecretStorageException) {
+            val choice = JOptionPane.showOptionDialog(
+                null, e.message, APP_NAME, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE,
+                null, arrayOf(RETRY, QUIT), RETRY,
+            )
+            if (choice != 0) return null
+        }
+    }
+}
+
 private const val APP_NAME = "HEV"
 private const val MIN_WIDTH = 360
 private const val MIN_HEIGHT = 520
+private const val RETRY = "Retry"
+private const val QUIT = "Quit"

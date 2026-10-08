@@ -2,9 +2,11 @@ package ai.hev.app.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ai.hev.app.data.local.prefs.SecretStorageException
 import ai.hev.app.data.repository.HevRepository
 import ai.hev.app.domain.decision.DecisionError
 import ai.hev.app.domain.provider.DecisionProtocol
+import ai.hev.app.domain.provider.ProviderIssue
 import ai.hev.app.domain.provider.ProviderPreset
 import ai.hev.app.domain.provider.ProviderPresets
 import kotlinx.coroutines.Job
@@ -69,13 +71,21 @@ class ProviderEditViewModel(
             return false
         }
         val config = current.toConfig()
-        repo.upsertProvider(config)
-        if (current.isNew || repo.activeProvider() == null) repo.setActiveProvider(config.id)
-        return true
+        return persist {
+            repo.upsertProvider(config)
+            if (current.isNew || repo.activeProvider() == null) repo.setActiveProvider(config.id)
+        }
     }
 
-    fun delete() {
-        existing?.let { repo.deleteProvider(it.id) }
+    /** Deletes and returns true, or shows why the keys could not be updated and returns false. */
+    fun delete(): Boolean = persist { existing?.let { repo.deleteProvider(it.id) } }
+
+    private inline fun persist(write: () -> Unit): Boolean = try {
+        write()
+        true
+    } catch (_: SecretStorageException) {
+        _state.update { it.copy(error = ProviderIssue.KeyringLocked) }
+        false
     }
 
     private fun edit(transform: (ProviderEditState) -> ProviderEditState) =

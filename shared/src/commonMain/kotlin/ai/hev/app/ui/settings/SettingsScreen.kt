@@ -1,10 +1,14 @@
 package ai.hev.app.ui.settings
 
+import ai.hev.app.data.local.prefs.SecretBackend
 import ai.hev.app.data.local.prefs.ThemeMode
 import ai.hev.app.resources.Res
+import ai.hev.app.resources.about_api_keys
 import ai.hev.app.resources.about_app
 import ai.hev.app.resources.about_author
 import ai.hev.app.resources.about_version
+import ai.hev.app.resources.api_keys_file
+import ai.hev.app.resources.api_keys_keyring
 import ai.hev.app.resources.app_author
 import ai.hev.app.resources.app_name
 import ai.hev.app.resources.app_version
@@ -61,6 +65,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
 private data class AccentSwatch(val color: Color)
@@ -84,6 +89,7 @@ fun SettingsScreen(
     onOpenProviders: () -> Unit,
 ) {
     val themeStore = LocalAppGraph.current.themeStore
+    val secretBackend = LocalAppGraph.current.secretBackend
     val theme by themeStore.settings.collectAsStateWithLifecycle()
 
     Scaffold(
@@ -215,6 +221,9 @@ fun SettingsScreen(
                         AboutRow(label = stringResource(Res.string.about_app), value = stringResource(Res.string.app_name))
                         AboutRow(label = stringResource(Res.string.about_version), value = stringResource(Res.string.app_version))
                         AboutRow(label = stringResource(Res.string.about_author), value = stringResource(Res.string.app_author))
+                        secretBackend?.let {
+                            AboutRow(label = stringResource(Res.string.about_api_keys), value = stringResource(it.label))
+                        }
                     }
                 }
             }
@@ -361,3 +370,9 @@ private fun AboutRow(label: String, value: String) {
         )
     }
 }
+
+private val SecretBackend.label: StringResource
+    get() = when (this) {
+        SecretBackend.Keyring -> Res.string.api_keys_keyring
+        SecretBackend.File -> Res.string.api_keys_file
+    }

@@ -53,6 +53,7 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.ktor.client.okhttp)
             implementation(libs.androidx.sqlite.bundled)
+            implementation(libs.secret.service)
         }
         jvmTest.dependencies {
             implementation(libs.junit)

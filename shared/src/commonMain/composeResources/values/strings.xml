@@ -56,6 +56,9 @@
     <string name="about_app">App</string>
     <string name="about_version">Version</string>
     <string name="about_author">Author</string>
+    <string name="about_api_keys">API keys</string>
+    <string name="api_keys_keyring">Keyring</string>
+    <string name="api_keys_file">File</string>
 
     <!-- Providers -->
     <string name="providers_title">Providers</string>
@@ -117,5 +120,6 @@
     <string name="error_network">Network error</string>
     <string name="error_malformed">Unexpected response</string>
     <string name="error_name_required">Enter a name</string>
+    <string name="error_keyring_locked">The keyring is locked</string>
     <string name="error_model_required">Enter a model</string>
 </resources>

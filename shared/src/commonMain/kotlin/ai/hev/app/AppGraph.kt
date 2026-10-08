@@ -3,6 +3,7 @@ package ai.hev.app
 import ai.hev.app.data.local.db.HevDatabase
 import ai.hev.app.data.local.prefs.ProviderStorage
 import ai.hev.app.data.local.prefs.ProviderStore
+import ai.hev.app.data.local.prefs.SecretBackend
 import ai.hev.app.data.local.prefs.ThemeStorage
 import ai.hev.app.data.local.prefs.ThemeStore
 import ai.hev.app.data.remote.DecisionClient
@@ -15,6 +16,8 @@ class AppGraph internal constructor(
     database: HevDatabase,
     providerStorage: ProviderStorage,
     themeStorage: ThemeStorage,
+    /** Where API keys live, when the platform has a choice; null on Android. */
+    val secretBackend: SecretBackend? = null,
 ) {
     private val transport = HttpTransport()
 

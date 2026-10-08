@@ -20,6 +20,7 @@ coroutines = "1.11.0"
 datetime = "0.8.0"
 junit = "4.13.2"
 dbusJava = "5.2.2"
+secretService = "1.3.3"
 slf4j = "2.0.20"
 
 [libraries]
@@ -53,6 +54,7 @@ kotlinx-coroutines-swing = { group = "org.jetbrains.kotlinx", name = "kotlinx-co
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 dbus-java-core = { group = "com.github.hypfvieh", name = "dbus-java-core", version.ref = "dbusJava" }
 dbus-java-transport = { group = "com.github.hypfvieh", name = "dbus-java-transport-native-unixsocket", version.ref = "dbusJava" }
+secret-service = { group = "org.purejava", name = "secret-service", version.ref = "secretService" }
 slf4j-nop = { group = "org.slf4j", name = "slf4j-nop", version.ref = "slf4j" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver3", version.ref = "okhttp" }
