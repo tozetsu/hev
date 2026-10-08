@@ -10,10 +10,8 @@ import ai.hev.app.domain.decision.DecisionRequest
 import ai.hev.app.domain.decision.Question
 import ai.hev.app.domain.history.HistoryEntry
 import ai.hev.app.domain.provider.ProviderConfig
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
 import kotlin.time.Clock
 
 class HevRepository(
@@ -58,14 +56,11 @@ class HevRepository(
     suspend fun listModels(modelsUrl: String, endpoint: String, apiKey: String): List<String> =
         modelCatalog.fetch(modelsUrl, endpoint, apiKey)
 
-    suspend fun getHistory(id: Long): HistoryEntry? =
-        withContext(Dispatchers.IO) { historyDao.getById(id)?.let(HistoryMapper::toDomain) }
+    suspend fun getHistory(id: Long): HistoryEntry? = historyDao.getById(id)?.let(HistoryMapper::toDomain)
 
-    suspend fun deleteHistory(id: Long) =
-        withContext(Dispatchers.IO) { historyDao.deleteById(id) }
+    suspend fun deleteHistory(id: Long) = historyDao.deleteById(id)
 
-    suspend fun clearHistory() =
-        withContext(Dispatchers.IO) { historyDao.clearAll() }
+    suspend fun clearHistory() = historyDao.clearAll()
 
     private fun Question.items(): List<ChoiceOption> = when (this) {
         is Question.Choice -> options

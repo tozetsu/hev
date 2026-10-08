@@ -1,6 +1,6 @@
 package ai.hev.app.testing
 
-/** Reads JSON fixtures from `src/test/resources/fixtures/`. */
+/** Reads JSON fixtures from `src/jvmTest/resources/fixtures/`. */
 object Fixtures {
     fun read(path: String): String {
         val resource = requireNotNull(javaClass.classLoader?.getResource("fixtures/$path")) {

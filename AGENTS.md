@@ -23,7 +23,7 @@ Both must pass before every commit. App version stays **1.0.0** unless the human
 - `data/remote/`: `DecisionClient`, one codec per protocol, `ModelCatalog`, `http/` (transport, retry, error bodies)
 - `data/local/`: Room (`db/`), encrypted provider storage (`prefs/`), `StorageKeys`
 - `ui/`: screens and ViewModels; thin ViewModels over pure state classes
-- Tests in `app/src/test/`; fixtures in `app/src/test/resources/fixtures/<vendor>/`
+- Tests in `shared/src/jvmTest/`; fixtures in `shared/src/jvmTest/resources/fixtures/<vendor>/`
 
 ## Languages
 
@@ -73,7 +73,7 @@ Both must pass before every commit. App version stays **1.0.0** unless the human
 
 ## History
 
-- Room database with exported schemas in `app/schemas/`; bump the version only with an explicit `Migration` in `HevMigrations` and a `MigrationTestHelper` test
+- Room database with exported schemas in `shared/schemas/`; bump the version only with an explicit `Migration` in `HevMigrations` and a `MigrationTestHelper` test
 - Never use destructive migrations; history stays until the user deletes it
 - Stored keys come from `StorageKeys`; never rename an existing key
 - Entries record provider id, protocol, refusal, and input tokens

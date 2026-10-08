@@ -1,13 +1,9 @@
 package ai.hev.app.data.local.db
 
-import android.app.Application
-import android.content.Context
 import androidx.room.Room
 import androidx.room.testing.MigrationTestHelper
 import androidx.sqlite.SQLiteConnection
-import androidx.sqlite.driver.AndroidSQLiteDriver
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.platform.app.InstrumentationRegistry
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import ai.hev.app.domain.decision.DecisionKind
 import ai.hev.app.domain.decision.DecisionOutcome
 import kotlinx.coroutines.runBlocking
@@ -16,24 +12,24 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
+import org.junit.rules.TemporaryFolder
+import kotlin.io.path.Path
 
-/** Plain [Application]: the real one opens the Android keystore, which Robolectric lacks. */
-@RunWith(RobolectricTestRunner::class)
-@Config(application = Application::class)
 class HevMigrationsTest {
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    private val dbFile = context.getDatabasePath("migration-test.db")
-
     @get:Rule
-    val helper = MigrationTestHelper(
-        instrumentation = InstrumentationRegistry.getInstrumentation(),
-        file = dbFile,
-        driver = AndroidSQLiteDriver(),
-        databaseClass = HevDatabase::class,
-    )
+    val folder = TemporaryFolder()
+
+    private val dbFile by lazy { folder.root.resolve("migration-test.db") }
+
+    /** Every connection it opens is closed by the test itself, so it need not be a rule. */
+    private val helper by lazy {
+        MigrationTestHelper(
+            schemaDirectoryPath = Path("schemas"),
+            databasePath = dbFile.toPath(),
+            driver = BundledSQLiteDriver(),
+            databaseClass = HevDatabase::class,
+        )
+    }
 
     @Test
     fun `2 to 3 keeps every row and normalises question types`() {
@@ -64,10 +60,7 @@ class HevMigrationsTest {
         helper.createDatabase(2).use { db -> db.insertV2Row(7, "noul", noul = 0.25) }
         helper.runMigrationsAndValidate(3, HevMigrations.ALL.toList()).close()
 
-        val room = Room.databaseBuilder<HevDatabase>(context, dbFile.path)
-            .setDriver(AndroidSQLiteDriver())
-            .addMigrations(*HevMigrations.ALL)
-            .build()
+        val room = Room.databaseBuilder<HevDatabase>(dbFile.path).build(BundledSQLiteDriver())
         try {
             val entry = runBlocking { room.historyDao().getById(7) }!!.let(HistoryMapper::toDomain)
 

@@ -2,7 +2,6 @@ package ai.hev.app.data.remote.http
 
 import ai.hev.app.domain.decision.DecisionError
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.bearerAuth
@@ -70,7 +69,8 @@ class HttpTransport(
     companion object {
         private val JSON_UTF8 = ContentType.Application.Json.withCharset(Charsets.UTF_8)
 
-        fun defaultClient(): HttpClient = HttpClient(OkHttp) {
+        /** The engine is whichever one the platform ships (OkHttp on Android and desktop). */
+        private fun defaultClient(): HttpClient = HttpClient {
             install(HttpTimeout) {
                 connectTimeoutMillis = 30.seconds.inWholeMilliseconds
                 socketTimeoutMillis = 90.seconds.inWholeMilliseconds

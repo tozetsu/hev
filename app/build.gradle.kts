@@ -1,9 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.room)
 }
 
 android {
@@ -34,12 +31,8 @@ android {
     buildFeatures {
         compose = true
     }
-    sourceSets {
-        // Robolectric reads assets from the merged debug variant; MigrationTestHelper needs the schemas there.
-        getByName("debug").assets.directories.add("$projectDir/schemas")
-    }
-    testOptions {
-        unitTests.isIncludeAndroidResources = true
+    lint {
+        checkDependencies = true
     }
     packaging {
         resources {
@@ -48,11 +41,9 @@ android {
     }
 }
 
-room {
-    schemaDirectory("$projectDir/schemas")
-}
-
 dependencies {
+    implementation(project(":shared"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -70,22 +61,8 @@ dependencies {
 
     implementation(libs.androidx.navigation.compose)
 
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.sqlite.framework)
-    ksp(libs.androidx.room.compiler)
-
-    implementation(libs.androidx.security.crypto)
-
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.okhttp)
-    implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.okhttp.mockwebserver)
-    testImplementation(libs.androidx.room.testing)
-    testImplementation(libs.androidx.test.core)
-    testImplementation(libs.robolectric)
 }

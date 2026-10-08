@@ -109,10 +109,10 @@ fun ResultContent(entry: HistoryEntry, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
             )
-            if (!entry.context.isNullOrBlank()) {
+            entry.context?.takeIf { it.isNotBlank() }?.let { context ->
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = entry.context,
+                    text = context,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -20,4 +20,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "HEV"
-include(":app")
+include(":app", ":shared")

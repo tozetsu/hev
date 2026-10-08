@@ -11,7 +11,7 @@ import ai.hev.app.data.remote.http.HttpTransport
 import ai.hev.app.data.repository.HevRepository
 
 /** The app's long-lived objects, wired from what each platform provides. */
-class AppGraph(
+class AppGraph internal constructor(
     database: HevDatabase,
     providerStorage: ProviderStorage,
     themeStorage: ThemeStorage,
