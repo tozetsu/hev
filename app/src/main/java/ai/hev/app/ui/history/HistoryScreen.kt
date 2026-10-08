@@ -46,9 +46,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ai.hev.app.HevApp
 import ai.hev.app.R
-import ai.hev.app.domain.model.HistoryEntry
-import ai.hev.app.domain.model.QuestionType
+import ai.hev.app.domain.decision.DecisionOutcome
+import ai.hev.app.domain.history.HistoryEntry
 import ai.hev.app.ui.components.formatConfidence
+import ai.hev.app.ui.components.formatPercent
+import ai.hev.app.ui.components.formatScore
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -173,7 +175,7 @@ private fun HistoryRow(
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(
-                text = entry.question,
+                text = entry.instructions,
                 fontWeight = FontWeight.Medium,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -202,35 +204,17 @@ private fun HistoryRow(
 @Composable
 private fun historySubtitle(entry: HistoryEntry): String {
     val na = stringResource(R.string.value_na)
-    val conf = stringResource(R.string.confidence_label, formatConfidence(entry.confidence, na))
-    return when (entry.questionType) {
-        QuestionType.Choice -> listOfNotNull(
-            entry.choice?.let { stringResource(R.string.history_choice, it) },
-            conf,
+    return when (val outcome = entry.outcome) {
+        is DecisionOutcome.Choice -> listOfNotNull(
+            stringResource(R.string.history_choice, outcome.choice),
+            outcome.confidence?.let { stringResource(R.string.confidence_label, formatConfidence(it, na)) },
         ).joinToString(" · ")
-        QuestionType.Score -> listOfNotNull(
-            stringResource(
-                R.string.score_label,
-                entry.score?.let { formatHistoryScore(it) } ?: na,
-            ),
-            conf,
+        is DecisionOutcome.Score -> listOfNotNull(
+            stringResource(R.string.score_label, formatScore(outcome.score)),
+            outcome.confidence?.let { stringResource(R.string.confidence_label, formatConfidence(it, na)) },
         ).joinToString(" · ")
-        QuestionType.Noul -> {
-            val pct = entry.noul?.let { formatHistoryPercent(it) } ?: na
-            stringResource(R.string.noul_label, pct)
-        }
+        is DecisionOutcome.YesNo -> stringResource(R.string.yes_probability, formatPercent(outcome.probability))
+        DecisionOutcome.Refused -> stringResource(R.string.result_refused)
+        null -> na
     }
-}
-
-private fun formatHistoryScore(value: Double): String {
-    return if (value == value.toLong().toDouble()) {
-        value.toLong().toString()
-    } else {
-        String.format("%.2f", value)
-    }
-}
-
-private fun formatHistoryPercent(value: Double): String {
-    val pct = (value * 100).coerceIn(0.0, 100.0)
-    return String.format("%.0f%%", pct)
 }

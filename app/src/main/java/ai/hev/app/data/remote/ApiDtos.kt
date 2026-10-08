@@ -13,7 +13,7 @@ data class SystemOneRequest(
 
 @Serializable
 data class QuestionDto(
-    val type: String = "choice",
+    val type: String,
     val instructions: String,
     /** Choice: object map; score: string array; noul: omitted. */
     val criteria: JsonElement? = null,
@@ -22,7 +22,6 @@ data class QuestionDto(
 @Serializable
 data class SystemOneResponse(
     val answers: Map<String, AnswerDto>? = null,
-    val response: ResponseMeta? = null,
     val usage: UsageDto? = null,
     val model: String? = null,
 )
@@ -40,23 +39,7 @@ data class AnswerDto(
 )
 
 @Serializable
-data class ResponseMeta(
-    val model: String? = null,
-)
-
-@Serializable
 data class UsageDto(
     @SerialName("input_tokens") val inputTokens: Int? = null,
     @SerialName("output_tokens") val outputTokens: Int? = null,
-)
-
-@Serializable
-data class ModelsListResponse(
-    val data: List<ModelItemDto>? = null,
-)
-
-@Serializable
-data class ModelItemDto(
-    val id: String,
-    @SerialName("owned_by") val ownedBy: String? = null,
 )

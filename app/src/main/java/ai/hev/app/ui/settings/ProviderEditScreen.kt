@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import ai.hev.app.HevApp
 import ai.hev.app.R
 import ai.hev.app.data.local.prefs.ProviderStore
-import ai.hev.app.domain.model.ProviderConfig
+import ai.hev.app.domain.provider.ProviderConfig
 import ai.hev.app.ui.navigation.Routes
 import java.util.UUID
 

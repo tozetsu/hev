@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ai.hev.app.HevApp
 import ai.hev.app.R
-import ai.hev.app.domain.model.ProviderConfig
+import ai.hev.app.domain.provider.ProviderConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

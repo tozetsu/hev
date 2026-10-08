@@ -36,18 +36,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ai.hev.app.HevApp
 import ai.hev.app.R
-import ai.hev.app.domain.model.HistoryEntry
-import ai.hev.app.domain.model.QuestionType
+import ai.hev.app.domain.decision.DecisionOutcome
+import ai.hev.app.domain.history.HistoryEntry
 import ai.hev.app.ui.components.MetaChip
 import ai.hev.app.ui.components.ProbabilityBar
 import ai.hev.app.ui.components.formatConfidence
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.doubleOrNull
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
-import kotlin.math.roundToInt
+import ai.hev.app.ui.components.formatPercent
+import ai.hev.app.ui.components.formatScore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,11 +96,7 @@ fun ResultScreen(
 
 @Composable
 fun ResultContent(entry: HistoryEntry, modifier: Modifier = Modifier) {
-    val probs = parseProbabilities(entry.probabilitiesJson)
-    val labels = parseOptionLabels(entry.optionsJson)
-    val levelList = parseLevelList(entry.optionsJson)
-    val sorted = probs.entries.sortedByDescending { it.value }
-    val na = stringResource(R.string.value_na)
+    val labels = remember(entry.items) { entry.items.associate { it.id to it.label } }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -114,64 +105,51 @@ fun ResultContent(entry: HistoryEntry, modifier: Modifier = Modifier) {
     ) {
         item {
             Text(
-                text = entry.question,
+                text = entry.instructions,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
             )
-            if (!entry.state.isNullOrBlank()) {
+            if (!entry.context.isNullOrBlank()) {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = entry.state,
+                    text = entry.context,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
 
-        when (entry.questionType) {
-            QuestionType.Choice -> {
-                item {
-                    MetaChip(stringResource(R.string.confidence_label, formatConfidence(entry.confidence, na)))
-                }
+        when (val outcome = entry.outcome) {
+            is DecisionOutcome.Choice -> {
+                item { ConfidenceChip(outcome.confidence) }
                 item {
                     ProbabilityCard {
-                        if (sorted.isEmpty()) {
-                            Text(stringResource(R.string.no_probability_data), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        } else {
-                            sorted.forEach { (key, value) ->
-                                val optionText = labels[key] ?: key
-                                ProbabilityBar(
-                                    label = "$key  $optionText",
-                                    probability = value,
-                                    highlighted = key == entry.choice,
-                                )
-                            }
+                        if (outcome.probabilities.isEmpty()) {
+                            Text(
+                                stringResource(R.string.no_probability_data),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        outcome.probabilities.entries.sortedByDescending { it.value }.forEach { (id, p) ->
+                            ProbabilityBar(
+                                label = "$id  ${labels[id] ?: ""}".trimEnd(),
+                                probability = p,
+                                highlighted = id == outcome.choice,
+                            )
                         }
                     }
                 }
             }
-            QuestionType.Score -> {
-                item {
-                    Text(
-                        text = stringResource(
-                            R.string.score_label,
-                            entry.score?.let { formatScore(it) } ?: na,
-                        ),
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-                item {
-                    MetaChip(stringResource(R.string.confidence_label, formatConfidence(entry.confidence, na)))
-                }
-                if (sorted.isNotEmpty()) {
+            is DecisionOutcome.Score -> {
+                item { Headline(stringResource(R.string.score_label, formatScore(outcome.score))) }
+                item { ConfidenceChip(outcome.confidence) }
+                if (outcome.probabilities.isNotEmpty()) {
                     item {
                         ProbabilityCard {
-                            sorted.forEach { (key, value) ->
-                                val levelText = resolveLevelLabel(key, labels, levelList)
+                            outcome.probabilities.entries.sortedByDescending { it.value }.forEach { (level, p) ->
                                 ProbabilityBar(
-                                    label = levelText,
-                                    probability = value,
+                                    label = labels[level.toString()] ?: level.toString(),
+                                    probability = p,
                                     highlighted = false,
                                 )
                             }
@@ -179,32 +157,16 @@ fun ResultContent(entry: HistoryEntry, modifier: Modifier = Modifier) {
                     }
                 }
             }
-            QuestionType.Noul -> {
+            is DecisionOutcome.YesNo -> {
+                item { Headline(stringResource(R.string.yes_probability, formatPercent(outcome.probability))) }
                 item {
-                    val pct = entry.noul?.let { formatPercent(it) } ?: na
-                    Text(
-                        text = stringResource(R.string.noul_label, pct),
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-                entry.noul?.let { noul ->
-                    item {
-                        ProbabilityCard {
-                            ProbabilityBar(
-                                label = "",
-                                probability = noul,
-                                highlighted = true,
-                            )
-                        }
-                    }
-                }
-                if (entry.confidence != null) {
-                    item {
-                        MetaChip(stringResource(R.string.confidence_label, formatConfidence(entry.confidence, na)))
+                    ProbabilityCard {
+                        ProbabilityBar(label = "", probability = outcome.probability, highlighted = true)
                     }
                 }
             }
+            DecisionOutcome.Refused -> item { Headline(stringResource(R.string.result_refused)) }
+            null -> item { Headline(stringResource(R.string.value_na)) }
         }
 
         item {
@@ -224,6 +186,22 @@ fun ResultContent(entry: HistoryEntry, modifier: Modifier = Modifier) {
 }
 
 @Composable
+private fun Headline(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.displaySmall,
+        fontWeight = FontWeight.SemiBold,
+    )
+}
+
+@Composable
+private fun ConfidenceChip(confidence: Double?) {
+    if (confidence != null) {
+        MetaChip(stringResource(R.string.confidence_label, formatConfidence(confidence, "")))
+    }
+}
+
+@Composable
 private fun ProbabilityCard(content: @Composable () -> Unit) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -238,62 +216,4 @@ private fun ProbabilityCard(content: @Composable () -> Unit) {
             content = { content() },
         )
     }
-}
-
-private fun formatScore(value: Double): String {
-    return if (value == value.toLong().toDouble()) {
-        value.toLong().toString()
-    } else {
-        String.format("%.2f", value)
-    }
-}
-
-private fun formatPercent(value: Double): String {
-    val pct = (value * 100).coerceIn(0.0, 100.0)
-    return "${pct.roundToInt()}%"
-}
-
-private fun resolveLevelLabel(
-    key: String,
-    labels: Map<String, String>,
-    levelList: List<String>,
-): String {
-    labels[key]?.let { return it }
-    val index = key.toIntOrNull()
-    if (index != null && index in levelList.indices) return levelList[index]
-    return key
-}
-
-private val json = Json { ignoreUnknownKeys = true }
-
-fun parseProbabilities(raw: String): Map<String, Double> {
-    if (raw.isBlank()) return emptyMap()
-    return runCatching {
-        val obj = json.parseToJsonElement(raw).jsonObject
-        obj.mapValues { (_, v) -> v.jsonPrimitive.doubleOrNull ?: 0.0 }
-    }.getOrElse { emptyMap() }
-}
-
-fun parseOptionLabels(raw: String): Map<String, String> {
-    if (raw.isBlank()) return emptyMap()
-    return runCatching {
-        val arr = json.parseToJsonElement(raw).jsonArray
-        arr.mapNotNull { el ->
-            val o = el.jsonObject
-            val id = o["id"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
-            val label = o["label"]?.jsonPrimitive?.contentOrNull ?: id
-            id to label
-        }.toMap()
-    }.getOrElse { emptyMap() }
-}
-
-fun parseLevelList(raw: String): List<String> {
-    if (raw.isBlank()) return emptyList()
-    return runCatching {
-        val arr = json.parseToJsonElement(raw).jsonArray
-        arr.mapNotNull { el ->
-            val o = el.jsonObject
-            o["label"]?.jsonPrimitive?.contentOrNull
-        }
-    }.getOrElse { emptyList() }
 }

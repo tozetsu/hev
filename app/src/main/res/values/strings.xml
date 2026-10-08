@@ -33,7 +33,7 @@
     <string name="placeholder_question">Enter a question</string>
     <string name="type_choice">Choice</string>
     <string name="type_score">Score</string>
-    <string name="type_noul">Noul</string>
+    <string name="type_yes_no">Yes/No</string>
     <string name="label_options">Options</string>
     <string name="label_levels">Levels</string>
     <string name="level_n">Level %1$d</string>
@@ -84,11 +84,12 @@
     <string name="value_na">—</string>
     <string name="confidence_label">Confidence %1$s</string>
     <string name="score_label">Score %1$s</string>
-    <string name="noul_label">%1$s</string>
+    <string name="yes_probability">Yes %1$s</string>
 
     <!-- Result -->
     <string name="result">Result</string>
     <string name="no_probability_data">No probability data</string>
+    <string name="result_refused">Refused</string>
 
     <!-- Errors -->
     <string name="error_configure_provider">Configure a provider first</string>
@@ -96,12 +97,20 @@
     <string name="error_endpoint">Enter an Endpoint</string>
     <string name="error_question">Enter a question</string>
     <string name="error_options_empty">Options cannot be empty</string>
-    <string name="error_options_range">Need 2–255 options</string>
-    <string name="error_import_min">Need at least 2 options</string>
+    <string name="error_options_range">Need %1$d–%2$d options</string>
+    <string name="error_import_min">Need at least %1$d options</string>
     <string name="error_levels_empty">Levels cannot be empty</string>
-    <string name="error_levels_range">Need 2–10 levels</string>
-    <string name="error_request_failed">Request failed %1$d\n%2$s</string>
+    <string name="error_levels_range">Need %1$d–%2$d levels</string>
+    <string name="error_kind_unsupported">Not supported by this model</string>
+    <string name="error_http_status">%1$s · HTTP %2$d</string>
+    <string name="error_unauthorized">Unauthorized</string>
+    <string name="error_invalid_request">Invalid request</string>
+    <string name="error_rate_limited">Rate limited</string>
+    <string name="error_unavailable">Service unavailable</string>
+    <string name="error_timeout">Timed out</string>
+    <string name="error_server">Server error</string>
     <string name="error_network">Network error</string>
+    <string name="error_malformed">Unexpected response</string>
     <string name="error_name_required">Enter a name</string>
     <string name="error_endpoint_required">Enter an Endpoint</string>
     <string name="error_model_required">Enter a model</string>

@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ai.hev.app.ui.theme.BarTrack
 import ai.hev.app.ui.theme.Teal
-import kotlin.math.roundToInt
+import java.util.Locale
 
 @Composable
 fun ProbabilityBar(
@@ -54,7 +54,7 @@ fun ProbabilityBar(
             )
             Spacer(Modifier.width(12.dp))
             Text(
-                text = String.format("%.1f%%", pct),
+                text = String.format(Locale.US, "%.1f%%", pct),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Medium,
                 color = if (highlighted) Teal else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -92,14 +92,5 @@ fun MetaChip(text: String, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-    }
-}
-
-fun formatConfidence(value: Double?, na: String = "—"): String {
-    if (value == null) return na
-    return if (value in 0.0..1.0) {
-        "${(value * 100).roundToInt()}%"
-    } else {
-        String.format("%.2f", value)
     }
 }

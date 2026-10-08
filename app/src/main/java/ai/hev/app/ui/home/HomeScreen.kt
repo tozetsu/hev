@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
@@ -56,11 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ai.hev.app.HevApp
 import ai.hev.app.R
-import ai.hev.app.domain.choice.MAX_CHOICE_OPTIONS
-import ai.hev.app.domain.choice.MAX_SCORE_LEVELS
-import ai.hev.app.domain.choice.MIN_CHOICE_OPTIONS
-import ai.hev.app.domain.choice.MIN_SCORE_LEVELS
-import ai.hev.app.domain.model.QuestionType
+import ai.hev.app.domain.decision.DecisionKind
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -114,27 +111,16 @@ fun HomeScreen(
                 )
             }
             item {
-                val types = listOf(
-                    QuestionType.Choice to R.string.type_choice,
-                    QuestionType.Score to R.string.type_score,
-                    QuestionType.Noul to R.string.type_noul,
+                KindSelector(
+                    kinds = DecisionKind.entries,
+                    selected = state.draft.kind,
+                    onSelect = vm::setKind,
                 )
-                SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                    types.forEachIndexed { index, (type, labelRes) ->
-                        SegmentedButton(
-                            selected = state.questionType == type,
-                            onClick = { vm.setQuestionType(type) },
-                            shape = SegmentedButtonDefaults.itemShape(index, types.size),
-                        ) {
-                            Text(stringResource(labelRes))
-                        }
-                    }
-                }
             }
             item {
                 OutlinedTextField(
-                    value = state.stateText,
-                    onValueChange = vm::setStateText,
+                    value = state.draft.context,
+                    onValueChange = vm::setContext,
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.label_state)) },
                     placeholder = { Text(stringResource(R.string.placeholder_optional)) },
@@ -145,8 +131,8 @@ fun HomeScreen(
             }
             item {
                 OutlinedTextField(
-                    value = state.question,
-                    onValueChange = vm::setQuestion,
+                    value = state.draft.instructions,
+                    onValueChange = vm::setInstructions,
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.label_question)) },
                     placeholder = { Text(stringResource(R.string.placeholder_question)) },
@@ -155,26 +141,20 @@ fun HomeScreen(
                     shape = RoundedCornerShape(14.dp),
                 )
             }
-            if (state.questionType != QuestionType.Noul) {
+            if (state.itemRange != null) {
+                val isScore = state.draft.kind == DecisionKind.Score
                 item {
-                    val maxItems = if (state.questionType == QuestionType.Score) {
-                        MAX_SCORE_LEVELS
-                    } else {
-                        MAX_CHOICE_OPTIONS
-                    }
-                    val sectionLabel = if (state.questionType == QuestionType.Score) {
-                        R.string.label_levels
-                    } else {
-                        R.string.label_options
-                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(stringResource(sectionLabel), style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            stringResource(if (isScore) R.string.label_levels else R.string.label_options),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (state.questionType == QuestionType.Choice) {
+                            if (!isScore) {
                                 TextButton(onClick = { showImportDialog = true }) {
                                     Icon(
                                         Icons.Outlined.UploadFile,
@@ -184,42 +164,33 @@ fun HomeScreen(
                                     Text(stringResource(R.string.action_import))
                                 }
                             }
-                            TextButton(onClick = vm::addOption, enabled = state.options.size < maxItems) {
+                            TextButton(onClick = vm::addItem, enabled = state.canAddItem) {
                                 Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Text(stringResource(R.string.action_add))
                             }
                         }
                     }
                 }
-                items(state.options.size, key = { state.options[it].id }) { index ->
-                    val opt = state.options[index]
-                    val fieldLabel = if (state.questionType == QuestionType.Score) {
-                        stringResource(R.string.level_n, index + 1)
-                    } else {
-                        stringResource(R.string.option_n, opt.id)
-                    }
-                    val minSize = if (state.questionType == QuestionType.Score) {
-                        MIN_SCORE_LEVELS
-                    } else {
-                        MIN_CHOICE_OPTIONS
-                    }
+                itemsIndexed(state.draft.items, key = { _, item -> item.id }) { index, item ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         OutlinedTextField(
-                            value = opt.label,
-                            onValueChange = { vm.setOptionLabel(opt.id, it) },
+                            value = item.label,
+                            onValueChange = { vm.setItemLabel(item.id, it) },
                             modifier = Modifier.weight(1f),
-                            label = { Text(fieldLabel) },
+                            label = {
+                                Text(
+                                    if (isScore) stringResource(R.string.level_n, index + 1)
+                                    else stringResource(R.string.option_n, item.id),
+                                )
+                            },
                             placeholder = { Text(stringResource(R.string.placeholder_description)) },
                             singleLine = true,
                             shape = RoundedCornerShape(12.dp),
                         )
-                        IconButton(
-                            onClick = { vm.removeOption(opt.id) },
-                            enabled = state.options.size > minSize,
-                        ) {
+                        IconButton(onClick = { vm.removeItem(item.id) }, enabled = state.canRemoveItem) {
                             Icon(
                                 Icons.Outlined.RemoveCircleOutline,
                                 contentDescription = stringResource(R.string.cd_delete),
@@ -345,3 +316,29 @@ private fun ProviderPicker(
         }
     }
 }
+
+@Composable
+private fun KindSelector(
+    kinds: List<DecisionKind>,
+    selected: DecisionKind,
+    onSelect: (DecisionKind) -> Unit,
+) {
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        kinds.forEachIndexed { index, kind ->
+            SegmentedButton(
+                selected = kind == selected,
+                onClick = { onSelect(kind) },
+                shape = SegmentedButtonDefaults.itemShape(index, kinds.size),
+            ) {
+                Text(stringResource(kind.labelRes))
+            }
+        }
+    }
+}
+
+private val DecisionKind.labelRes: Int
+    get() = when (this) {
+        DecisionKind.Choice -> R.string.type_choice
+        DecisionKind.Score -> R.string.type_score
+        DecisionKind.YesNo -> R.string.type_yes_no
+    }

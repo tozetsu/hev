@@ -26,7 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import ai.hev.app.HevApp
 import ai.hev.app.R
-import ai.hev.app.domain.model.HistoryEntry
+import ai.hev.app.domain.history.HistoryEntry
 import ai.hev.app.ui.result.ResultContent
 import kotlinx.coroutines.launch
 
