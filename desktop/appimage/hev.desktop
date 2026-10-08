@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=HEV
+Exec=hev
+Icon=hev
+Categories=Utility;
+StartupWMClass=hev
+Terminal=false

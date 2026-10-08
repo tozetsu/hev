@@ -1,0 +1,3 @@
+#!/bin/sh
+# The AppImage runtime starts this; it hands over to the jpackage launcher next to it.
+exec "${APPDIR:-$(dirname "$(readlink -f "$0")")}/bin/hev" "$@"
