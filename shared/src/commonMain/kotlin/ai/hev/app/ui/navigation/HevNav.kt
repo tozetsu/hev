@@ -7,6 +7,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.savedstate.read
 import ai.hev.app.ui.history.HistoryDetailScreen
 import ai.hev.app.ui.history.HistoryScreen
 import ai.hev.app.ui.home.HomeScreen
@@ -36,7 +37,7 @@ fun HevNavHost(
             Routes.RESULT,
             arguments = listOf(navArgument("historyId") { type = NavType.LongType }),
         ) { entry ->
-            val id = entry.arguments?.getLong("historyId") ?: 0L
+            val id = entry.arguments?.read { getLong("historyId") } ?: 0L
             ResultScreen(
                 historyId = id,
                 onBack = { navController.popBackStack() },
@@ -64,7 +65,7 @@ fun HevNavHost(
             Routes.PROVIDER_EDIT,
             arguments = listOf(navArgument("providerId") { type = NavType.StringType }),
         ) { entry ->
-            val id = entry.arguments?.getString("providerId") ?: Routes.NEW_PROVIDER
+            val id = entry.arguments?.read { getString("providerId") } ?: Routes.NEW_PROVIDER
             ProviderEditScreen(
                 providerId = id,
                 onBack = { navController.popBackStack() },
@@ -80,7 +81,7 @@ fun HevNavHost(
             Routes.HISTORY_DETAIL,
             arguments = listOf(navArgument("historyId") { type = NavType.LongType }),
         ) { entry ->
-            val id = entry.arguments?.getLong("historyId") ?: 0L
+            val id = entry.arguments?.read { getLong("historyId") } ?: 0L
             HistoryDetailScreen(
                 historyId = id,
                 onBack = { navController.popBackStack() },

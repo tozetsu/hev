@@ -1,5 +1,33 @@
 package ai.hev.app.ui.settings
 
+import ai.hev.app.domain.provider.DecisionProtocol
+import ai.hev.app.domain.provider.ProviderPreset
+import ai.hev.app.domain.provider.ProviderPresets
+import ai.hev.app.resources.Res
+import ai.hev.app.resources.action_cancel
+import ai.hev.app.resources.action_delete
+import ai.hev.app.resources.action_hide
+import ai.hev.app.resources.action_save
+import ai.hev.app.resources.action_show
+import ai.hev.app.resources.cd_back
+import ai.hev.app.resources.cd_delete
+import ai.hev.app.resources.delete_provider_message
+import ai.hev.app.resources.delete_provider_title
+import ai.hev.app.resources.label_api_key
+import ai.hev.app.resources.label_api_key_optional
+import ai.hev.app.resources.label_endpoint
+import ai.hev.app.resources.label_model
+import ai.hev.app.resources.label_models_url
+import ai.hev.app.resources.label_name
+import ai.hev.app.resources.preset_custom
+import ai.hev.app.resources.protocol_openai_decisions
+import ai.hev.app.resources.protocol_system_one
+import ai.hev.app.resources.provider_edit
+import ai.hev.app.resources.provider_new
+import ai.hev.app.ui.common.LocalAppGraph
+import ai.hev.app.ui.common.text
+import ai.hev.app.ui.components.HevIcons
+import ai.hev.app.ui.navigation.Routes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -15,9 +43,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
@@ -28,7 +53,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -44,20 +69,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import ai.hev.app.R
-import ai.hev.app.ui.common.LocalAppGraph
-import ai.hev.app.ui.common.text
-import ai.hev.app.domain.provider.DecisionProtocol
-import ai.hev.app.domain.provider.ProviderPreset
-import ai.hev.app.domain.provider.ProviderPresets
-import ai.hev.app.ui.navigation.Routes
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,16 +95,16 @@ fun ProviderEditScreen(
         contentWindowInsets = WindowInsets.safeContent,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(if (state.isNew) R.string.provider_new else R.string.provider_edit)) },
+                title = { Text(stringResource(if (state.isNew) Res.string.provider_new else Res.string.provider_edit)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+                        Icon(HevIcons.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
                     }
                 },
                 actions = {
                     if (!state.isNew) {
                         IconButton(onClick = { confirmDelete = true }) {
-                            Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.cd_delete))
+                            Icon(HevIcons.Delete, contentDescription = stringResource(Res.string.cd_delete))
                         }
                     }
                 },
@@ -115,21 +134,21 @@ fun ProviderEditScreen(
                 }
             }
             item {
-                Field(state.name, vm::setName, R.string.label_name)
+                Field(state.name, vm::setName, Res.string.label_name)
             }
             item {
-                Field(state.endpoint, vm::setEndpoint, R.string.label_endpoint, keyboardType = KeyboardType.Uri)
+                Field(state.endpoint, vm::setEndpoint, Res.string.label_endpoint, keyboardType = KeyboardType.Uri)
             }
             if (state.isCustom) {
                 item {
-                    Field(state.modelsUrl, vm::setModelsUrl, R.string.label_models_url, keyboardType = KeyboardType.Uri)
+                    Field(state.modelsUrl, vm::setModelsUrl, Res.string.label_models_url, keyboardType = KeyboardType.Uri)
                 }
             }
             item {
                 SecretField(
                     value = state.apiKey,
                     onValueChange = vm::setApiKey,
-                    label = if (state.apiKeyRequired) R.string.label_api_key else R.string.label_api_key_optional,
+                    label = if (state.apiKeyRequired) Res.string.label_api_key else Res.string.label_api_key_optional,
                 )
             }
             item {
@@ -156,7 +175,7 @@ fun ProviderEditScreen(
                         .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
                 ) {
-                    Text(stringResource(R.string.action_save))
+                    Text(stringResource(Res.string.action_save))
                 }
             }
         }
@@ -165,17 +184,17 @@ fun ProviderEditScreen(
     if (confirmDelete) {
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
-            title = { Text(stringResource(R.string.delete_provider_title)) },
-            text = { Text(stringResource(R.string.delete_provider_message, state.name)) },
+            title = { Text(stringResource(Res.string.delete_provider_title)) },
+            text = { Text(stringResource(Res.string.delete_provider_message, state.name)) },
             confirmButton = {
                 TextButton(onClick = {
                     vm.delete()
                     confirmDelete = false
                     onBack()
-                }) { Text(stringResource(R.string.action_delete)) }
+                }) { Text(stringResource(Res.string.action_delete)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.action_cancel)) }
+                TextButton(onClick = { confirmDelete = false }) { Text(stringResource(Res.string.action_cancel)) }
             },
         )
     }
@@ -198,7 +217,7 @@ private fun PresetChips(selected: ProviderPreset?, onSelect: (ProviderPreset?) -
             FilterChip(
                 selected = selected == null,
                 onClick = { onSelect(null) },
-                label = { Text(stringResource(R.string.preset_custom)) },
+                label = { Text(stringResource(Res.string.preset_custom)) },
             )
         }
     }
@@ -225,17 +244,17 @@ private fun ProtocolSelector(
     }
 }
 
-private val DecisionProtocol.labelRes: Int
+private val DecisionProtocol.labelRes: StringResource
     get() = when (this) {
-        DecisionProtocol.SystemOne -> R.string.protocol_system_one
-        DecisionProtocol.OpenAiDecisions -> R.string.protocol_openai_decisions
+        DecisionProtocol.SystemOne -> Res.string.protocol_system_one
+        DecisionProtocol.OpenAiDecisions -> Res.string.protocol_openai_decisions
     }
 
 @Composable
 private fun Field(
     value: String,
     onValueChange: (String) -> Unit,
-    label: Int,
+    label: StringResource,
     keyboardType: KeyboardType = KeyboardType.Text,
 ) {
     OutlinedTextField(
@@ -272,12 +291,12 @@ private fun ModelField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            label = { Text(stringResource(R.string.label_model)) },
+            label = { Text(stringResource(Res.string.label_model)) },
             singleLine = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(showMenu) },
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor(MenuAnchorType.PrimaryEditable),
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
             shape = RoundedCornerShape(12.dp),
         )
         ExposedDropdownMenu(expanded = showMenu, onDismissRequest = { expanded = false }) {
@@ -295,7 +314,7 @@ private fun ModelField(
 }
 
 @Composable
-private fun SecretField(value: String, onValueChange: (String) -> Unit, label: Int) {
+private fun SecretField(value: String, onValueChange: (String) -> Unit, label: StringResource) {
     var visible by remember { mutableStateOf(false) }
     OutlinedTextField(
         value = value,
@@ -309,7 +328,7 @@ private fun SecretField(value: String, onValueChange: (String) -> Unit, label: I
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
             TextButton(onClick = { visible = !visible }) {
-                Text(stringResource(if (visible) R.string.action_hide else R.string.action_show))
+                Text(stringResource(if (visible) Res.string.action_hide else Res.string.action_show))
             }
         },
         shape = RoundedCornerShape(12.dp),

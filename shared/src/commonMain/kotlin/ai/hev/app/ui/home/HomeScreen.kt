@@ -1,5 +1,36 @@
 package ai.hev.app.ui.home
 
+import ai.hev.app.domain.decision.DecisionKind
+import ai.hev.app.resources.Res
+import ai.hev.app.resources.action_add
+import ai.hev.app.resources.action_cancel
+import ai.hev.app.resources.action_import
+import ai.hev.app.resources.action_submit
+import ai.hev.app.resources.app_name
+import ai.hev.app.resources.cd_delete
+import ai.hev.app.resources.cd_history
+import ai.hev.app.resources.cd_settings
+import ai.hev.app.resources.error_configure_provider
+import ai.hev.app.resources.error_import_min
+import ai.hev.app.resources.import_options_hint
+import ai.hev.app.resources.import_options_title
+import ai.hev.app.resources.label_levels
+import ai.hev.app.resources.label_options
+import ai.hev.app.resources.label_question
+import ai.hev.app.resources.label_state
+import ai.hev.app.resources.level_n
+import ai.hev.app.resources.option_n
+import ai.hev.app.resources.placeholder_description
+import ai.hev.app.resources.placeholder_optional
+import ai.hev.app.resources.placeholder_question
+import ai.hev.app.resources.provider
+import ai.hev.app.resources.provider_not_configured
+import ai.hev.app.resources.type_choice
+import ai.hev.app.resources.type_score
+import ai.hev.app.resources.type_yes_no
+import ai.hev.app.ui.common.LocalAppGraph
+import ai.hev.app.ui.common.text
+import ai.hev.app.ui.components.HevIcons
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,12 +48,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.RemoveCircleOutline
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.UploadFile
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,7 +58,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -50,15 +75,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import ai.hev.app.R
-import ai.hev.app.ui.common.LocalAppGraph
-import ai.hev.app.ui.common.text
-import ai.hev.app.domain.decision.DecisionKind
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,7 +92,7 @@ fun HomeScreen(
     val repo = LocalAppGraph.current.repository
     val vm = viewModel { HomeViewModel(repo) }
     val state by vm.uiState.collectAsStateWithLifecycle()
-    val notConfigured = stringResource(R.string.provider_not_configured)
+    val notConfigured = stringResource(Res.string.provider_not_configured)
     var showImportDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -78,14 +100,14 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(stringResource(R.string.app_name), fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(Res.string.app_name), fontWeight = FontWeight.SemiBold)
                 },
                 actions = {
                     IconButton(onClick = onOpenHistory) {
-                        Icon(Icons.Outlined.History, contentDescription = stringResource(R.string.cd_history))
+                        Icon(HevIcons.History, contentDescription = stringResource(Res.string.cd_history))
                     }
                     IconButton(onClick = onOpenSettings) {
-                        Icon(Icons.Outlined.Settings, contentDescription = stringResource(R.string.cd_settings))
+                        Icon(HevIcons.Settings, contentDescription = stringResource(Res.string.cd_settings))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -122,8 +144,8 @@ fun HomeScreen(
                     value = state.draft.context,
                     onValueChange = vm::setContext,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(R.string.label_state)) },
-                    placeholder = { Text(stringResource(R.string.placeholder_optional)) },
+                    label = { Text(stringResource(Res.string.label_state)) },
+                    placeholder = { Text(stringResource(Res.string.placeholder_optional)) },
                     minLines = 2,
                     maxLines = 5,
                     shape = RoundedCornerShape(14.dp),
@@ -134,8 +156,8 @@ fun HomeScreen(
                     value = state.draft.instructions,
                     onValueChange = vm::setInstructions,
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(R.string.label_question)) },
-                    placeholder = { Text(stringResource(R.string.placeholder_question)) },
+                    label = { Text(stringResource(Res.string.label_question)) },
+                    placeholder = { Text(stringResource(Res.string.placeholder_question)) },
                     minLines = 2,
                     maxLines = 6,
                     shape = RoundedCornerShape(14.dp),
@@ -150,23 +172,23 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            stringResource(if (isScore) R.string.label_levels else R.string.label_options),
+                            stringResource(if (isScore) Res.string.label_levels else Res.string.label_options),
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             if (!isScore) {
                                 TextButton(onClick = { showImportDialog = true }) {
                                     Icon(
-                                        Icons.Outlined.UploadFile,
+                                        HevIcons.UploadFile,
                                         contentDescription = null,
                                         modifier = Modifier.size(18.dp),
                                     )
-                                    Text(stringResource(R.string.action_import))
+                                    Text(stringResource(Res.string.action_import))
                                 }
                             }
                             TextButton(onClick = vm::addItem, enabled = state.canAddItem) {
-                                Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Text(stringResource(R.string.action_add))
+                                Icon(HevIcons.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Text(stringResource(Res.string.action_add))
                             }
                         }
                     }
@@ -182,18 +204,18 @@ fun HomeScreen(
                             modifier = Modifier.weight(1f),
                             label = {
                                 Text(
-                                    if (isScore) stringResource(R.string.level_n, index + 1)
-                                    else stringResource(R.string.option_n, item.id),
+                                    if (isScore) stringResource(Res.string.level_n, index + 1)
+                                    else stringResource(Res.string.option_n, item.id),
                                 )
                             },
-                            placeholder = { Text(stringResource(R.string.placeholder_description)) },
+                            placeholder = { Text(stringResource(Res.string.placeholder_description)) },
                             singleLine = true,
                             shape = RoundedCornerShape(12.dp),
                         )
                         IconButton(onClick = { vm.removeItem(item.id) }, enabled = state.canRemoveItem) {
                             Icon(
-                                Icons.Outlined.RemoveCircleOutline,
-                                contentDescription = stringResource(R.string.cd_delete),
+                                HevIcons.RemoveCircleOutline,
+                                contentDescription = stringResource(Res.string.cd_delete),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
@@ -224,7 +246,7 @@ fun HomeScreen(
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
                     } else {
-                        Text(stringResource(R.string.action_submit), style = MaterialTheme.typography.titleMedium)
+                        Text(stringResource(Res.string.action_submit), style = MaterialTheme.typography.titleMedium)
                     }
                 }
                 Spacer(Modifier.height(24.dp))
@@ -252,7 +274,7 @@ private fun ImportOptionsDialog(
     var text by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.import_options_title)) },
+        title = { Text(stringResource(Res.string.import_options_title)) },
         text = {
             Column {
                 OutlinedTextField(
@@ -261,7 +283,7 @@ private fun ImportOptionsDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(220.dp),
-                    placeholder = { Text(stringResource(R.string.import_options_hint)) },
+                    placeholder = { Text(stringResource(Res.string.import_options_hint)) },
                     shape = RoundedCornerShape(12.dp),
                 )
             }
@@ -271,12 +293,12 @@ private fun ImportOptionsDialog(
                 onClick = { onImport(text) },
                 enabled = text.isNotBlank(),
             ) {
-                Text(stringResource(R.string.action_import))
+                Text(stringResource(Res.string.action_import))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel))
+                Text(stringResource(Res.string.action_cancel))
             }
         },
     )
@@ -296,11 +318,11 @@ private fun ProviderPicker(
             value = selectedLabel,
             onValueChange = {},
             readOnly = true,
-            label = { Text(stringResource(R.string.provider)) },
+            label = { Text(stringResource(Res.string.provider)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
             shape = RoundedCornerShape(14.dp),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -336,18 +358,18 @@ private fun KindSelector(
     }
 }
 
-private val DecisionKind.labelRes: Int
+private val DecisionKind.labelRes: StringResource
     get() = when (this) {
-        DecisionKind.Choice -> R.string.type_choice
-        DecisionKind.Score -> R.string.type_score
-        DecisionKind.YesNo -> R.string.type_yes_no
+        DecisionKind.Choice -> Res.string.type_choice
+        DecisionKind.Score -> Res.string.type_score
+        DecisionKind.YesNo -> Res.string.type_yes_no
     }
 
 @Composable
 private fun HomeError.text(): String = when (this) {
-    HomeError.NoProvider -> stringResource(R.string.error_configure_provider)
+    HomeError.NoProvider -> stringResource(Res.string.error_configure_provider)
     is HomeError.Provider -> issue.text()
     is HomeError.Draft -> issue.text()
-    is HomeError.TooFewOptions -> stringResource(R.string.error_import_min, min)
+    is HomeError.TooFewOptions -> stringResource(Res.string.error_import_min, min)
     is HomeError.Request -> error.text()
 }

@@ -1,5 +1,26 @@
 package ai.hev.app.ui.result
 
+import ai.hev.app.domain.decision.DecisionOutcome
+import ai.hev.app.domain.history.HistoryEntry
+import ai.hev.app.resources.Res
+import ai.hev.app.resources.cd_back
+import ai.hev.app.resources.cd_history
+import ai.hev.app.resources.confidence_label
+import ai.hev.app.resources.input_tokens
+import ai.hev.app.resources.loading
+import ai.hev.app.resources.no_probability_data
+import ai.hev.app.resources.result
+import ai.hev.app.resources.result_refused
+import ai.hev.app.resources.score_label
+import ai.hev.app.resources.value_na
+import ai.hev.app.resources.yes_probability
+import ai.hev.app.ui.common.LocalAppGraph
+import ai.hev.app.ui.components.HevIcons
+import ai.hev.app.ui.components.MetaChip
+import ai.hev.app.ui.components.ProbabilityBar
+import ai.hev.app.ui.components.formatConfidence
+import ai.hev.app.ui.components.formatPercent
+import ai.hev.app.ui.components.formatScore
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -10,9 +31,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.History
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,19 +48,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import ai.hev.app.R
-import ai.hev.app.ui.common.LocalAppGraph
-import ai.hev.app.domain.decision.DecisionOutcome
-import ai.hev.app.domain.history.HistoryEntry
-import ai.hev.app.ui.components.MetaChip
-import ai.hev.app.ui.components.ProbabilityBar
-import ai.hev.app.ui.components.formatConfidence
-import ai.hev.app.ui.components.formatPercent
-import ai.hev.app.ui.components.formatScore
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,15 +70,15 @@ fun ResultScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.result)) },
+                title = { Text(stringResource(Res.string.result)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+                        Icon(HevIcons.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = onOpenHistory) {
-                        Icon(Icons.Outlined.History, contentDescription = stringResource(R.string.cd_history))
+                        Icon(HevIcons.History, contentDescription = stringResource(Res.string.cd_history))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -86,7 +95,7 @@ fun ResultScreen(
                     .padding(padding)
                     .padding(20.dp),
             ) {
-                Text(stringResource(R.string.loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(Res.string.loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             ResultContent(entry = e, modifier = Modifier.padding(padding))
@@ -126,7 +135,7 @@ fun ResultContent(entry: HistoryEntry, modifier: Modifier = Modifier) {
                     ProbabilityCard {
                         if (outcome.probabilities.isEmpty()) {
                             Text(
-                                stringResource(R.string.no_probability_data),
+                                stringResource(Res.string.no_probability_data),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
@@ -141,7 +150,7 @@ fun ResultContent(entry: HistoryEntry, modifier: Modifier = Modifier) {
                 }
             }
             is DecisionOutcome.Score -> {
-                item { Headline(stringResource(R.string.score_label, formatScore(outcome.score))) }
+                item { Headline(stringResource(Res.string.score_label, formatScore(outcome.score))) }
                 item { ConfidenceChip(outcome.confidence) }
                 if (outcome.probabilities.isNotEmpty()) {
                     item {
@@ -158,22 +167,22 @@ fun ResultContent(entry: HistoryEntry, modifier: Modifier = Modifier) {
                 }
             }
             is DecisionOutcome.YesNo -> {
-                item { Headline(stringResource(R.string.yes_probability, formatPercent(outcome.probability))) }
+                item { Headline(stringResource(Res.string.yes_probability, formatPercent(outcome.probability))) }
                 item {
                     ProbabilityCard {
                         ProbabilityBar(label = "", probability = outcome.probability, highlighted = true)
                     }
                 }
             }
-            DecisionOutcome.Refused -> item { Headline(stringResource(R.string.result_refused)) }
-            null -> item { Headline(stringResource(R.string.value_na)) }
+            DecisionOutcome.Refused -> item { Headline(stringResource(Res.string.result_refused)) }
+            null -> item { Headline(stringResource(Res.string.value_na)) }
         }
 
         item {
             val meta = listOfNotNull(
                 entry.providerName?.takeIf { it.isNotBlank() },
                 entry.model?.takeIf { it.isNotBlank() },
-                entry.inputTokens?.let { pluralStringResource(R.plurals.input_tokens, it, it) },
+                entry.inputTokens?.let { pluralStringResource(Res.plurals.input_tokens, it, it) },
             )
             if (meta.isNotEmpty()) {
                 Text(
@@ -198,7 +207,7 @@ private fun Headline(text: String) {
 @Composable
 private fun ConfidenceChip(confidence: Double?) {
     if (confidence != null) {
-        MetaChip(stringResource(R.string.confidence_label, formatConfidence(confidence, "")))
+        MetaChip(stringResource(Res.string.confidence_label, formatConfidence(confidence, "")))
     }
 }
 

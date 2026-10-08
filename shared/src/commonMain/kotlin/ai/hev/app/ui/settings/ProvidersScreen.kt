@@ -1,5 +1,13 @@
 package ai.hev.app.ui.settings
 
+import ai.hev.app.domain.provider.ProviderConfig
+import ai.hev.app.resources.Res
+import ai.hev.app.resources.cd_add
+import ai.hev.app.resources.cd_back
+import ai.hev.app.resources.cd_select
+import ai.hev.app.resources.providers_title
+import ai.hev.app.ui.common.LocalAppGraph
+import ai.hev.app.ui.components.HevIcons
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,12 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.CheckCircle
-import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,14 +35,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import ai.hev.app.R
-import ai.hev.app.ui.common.LocalAppGraph
-import ai.hev.app.domain.provider.ProviderConfig
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,10 +55,10 @@ fun ProvidersScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.providers_title)) },
+                title = { Text(stringResource(Res.string.providers_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+                        Icon(HevIcons.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -74,7 +73,7 @@ fun ProvidersScreen(
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 elevation = FloatingActionButtonDefaults.elevation(),
             ) {
-                Icon(Icons.Outlined.Add, contentDescription = stringResource(R.string.cd_add))
+                Icon(HevIcons.Add, contentDescription = stringResource(Res.string.cd_add))
             }
         },
     ) { padding ->
@@ -120,8 +119,8 @@ private fun ProviderRow(
         ) {
             IconButton(onClick = onSelect) {
                 Icon(
-                    if (active) Icons.Outlined.CheckCircle else Icons.Outlined.RadioButtonUnchecked,
-                    contentDescription = stringResource(R.string.cd_select),
+                    if (active) HevIcons.CheckCircle else HevIcons.RadioButtonUnchecked,
+                    contentDescription = stringResource(Res.string.cd_select),
                     tint = if (active) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -144,7 +143,7 @@ private fun ProviderRow(
                 )
             }
             Icon(
-                Icons.Outlined.ChevronRight,
+                HevIcons.ChevronRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )

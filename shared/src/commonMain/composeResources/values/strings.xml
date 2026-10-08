@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">HEV</string>
+    <string name="app_version">1.0.0</string>
+    <string name="app_author">tozetsu</string>
+
+    <!-- Common -->
+    <string name="cd_back">Back</string>
+    <string name="cd_history">History</string>
+    <string name="cd_settings">Settings</string>
+    <string name="cd_delete">Delete</string>
+    <string name="cd_add">Add</string>
+    <string name="cd_clear">Clear</string>
+    <string name="cd_select">Select</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_save">Save</string>
+    <string name="action_add">Add</string>
+    <string name="action_import">Import</string>
+    <string name="action_submit">Submit</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_show">Show</string>
+    <string name="action_hide">Hide</string>
+    <string name="loading">Loading…</string>
+
+    <!-- Home -->
+    <string name="provider">Provider</string>
+    <string name="provider_not_configured">Not configured</string>
+    <string name="label_state">State / Context</string>
+    <string name="placeholder_optional">Optional</string>
+    <string name="label_question">Question</string>
+    <string name="placeholder_question">Enter a question</string>
+    <string name="type_choice">Choice</string>
+    <string name="type_score">Score</string>
+    <string name="type_yes_no">Yes/No</string>
+    <string name="label_options">Options</string>
+    <string name="label_levels">Levels</string>
+    <string name="level_n">Level %1$d</string>
+    <string name="option_n">Option %1$s</string>
+    <string name="placeholder_description">Description</string>
+    <string name="import_options_title">Import options</string>
+    <string name="import_options_hint">One option per line</string>
+
+    <!-- Settings -->
+    <string name="settings">Settings</string>
+    <string name="section_providers">Providers</string>
+    <string name="manage_providers">Manage providers</string>
+    <string name="section_theme">Theme</string>
+    <string name="label_appearance">Appearance</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_system">System</string>
+    <string name="label_accent">Accent</string>
+    <string name="section_about">About</string>
+    <string name="about_app">App</string>
+    <string name="about_version">Version</string>
+    <string name="about_author">Author</string>
+
+    <!-- Providers -->
+    <string name="providers_title">Providers</string>
+    <string name="provider_new">New provider</string>
+    <string name="provider_edit">Edit provider</string>
+    <string name="label_name">Name</string>
+    <string name="label_endpoint">Endpoint</string>
+    <string name="label_api_key">API key</string>
+    <string name="label_api_key_optional">API key (optional)</string>
+    <string name="label_models_url">Models endpoint</string>
+    <string name="preset_custom">Custom</string>
+    <string name="protocol_system_one">System One</string>
+    <string name="protocol_openai_decisions">OpenAI Decisions</string>
+    <string name="label_model">Model</string>
+    <string name="delete_provider_title">Delete provider</string>
+    <string name="delete_provider_message">Delete “%1$s”?</string>
+
+    <!-- History -->
+    <string name="history">History</string>
+    <string name="history_empty">No records yet</string>
+    <string name="clear_history_title">Clear history</string>
+    <string name="clear_history_message">Delete all records?</string>
+    <string name="history_detail">Detail</string>
+    <string name="delete_record_title">Delete record</string>
+    <string name="delete_record_message">Delete this history entry?</string>
+    <string name="history_choice">→ %1$s</string>
+    <string name="value_na">—</string>
+    <string name="confidence_label">Confidence %1$s</string>
+    <string name="score_label">Score %1$s</string>
+    <string name="yes_probability">Yes %1$s</string>
+
+    <!-- Result -->
+    <string name="result">Result</string>
+    <string name="no_probability_data">No probability data</string>
+    <string name="result_refused">Refused</string>
+    <plurals name="input_tokens">
+        <item quantity="one">%1$d input token</item>
+        <item quantity="other">%1$d input tokens</item>
+    </plurals>
+
+    <!-- Errors -->
+    <string name="error_configure_provider">Configure a provider first</string>
+    <string name="error_api_key">Enter an API key</string>
+    <string name="error_endpoint_invalid">Enter a valid endpoint</string>
+    <string name="error_question">Enter a question</string>
+    <string name="error_options_empty">Options cannot be empty</string>
+    <string name="error_options_range">Need %1$d–%2$d options</string>
+    <string name="error_import_min">Need at least %1$d options</string>
+    <string name="error_levels_empty">Levels cannot be empty</string>
+    <string name="error_levels_range">Need %1$d–%2$d levels</string>
+    <string name="error_kind_unsupported">Not supported by this model</string>
+    <string name="error_http_status">%1$s · HTTP %2$d</string>
+    <string name="error_unauthorized">Unauthorized</string>
+    <string name="error_invalid_request">Invalid request</string>
+    <string name="error_rate_limited">Rate limited</string>
+    <string name="error_unavailable">Service unavailable</string>
+    <string name="error_timeout">Timed out</string>
+    <string name="error_server">Server error</string>
+    <string name="error_network">Network error</string>
+    <string name="error_malformed">Unexpected response</string>
+    <string name="error_name_required">Enter a name</string>
+    <string name="error_model_required">Enter a model</string>
+</resources>

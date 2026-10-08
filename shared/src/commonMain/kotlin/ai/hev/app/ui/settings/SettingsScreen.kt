@@ -1,5 +1,26 @@
 package ai.hev.app.ui.settings
 
+import ai.hev.app.data.local.prefs.ThemeMode
+import ai.hev.app.resources.Res
+import ai.hev.app.resources.about_app
+import ai.hev.app.resources.about_author
+import ai.hev.app.resources.about_version
+import ai.hev.app.resources.app_author
+import ai.hev.app.resources.app_name
+import ai.hev.app.resources.app_version
+import ai.hev.app.resources.cd_back
+import ai.hev.app.resources.label_accent
+import ai.hev.app.resources.label_appearance
+import ai.hev.app.resources.manage_providers
+import ai.hev.app.resources.section_about
+import ai.hev.app.resources.section_providers
+import ai.hev.app.resources.section_theme
+import ai.hev.app.resources.settings
+import ai.hev.app.resources.theme_dark
+import ai.hev.app.resources.theme_light
+import ai.hev.app.resources.theme_system
+import ai.hev.app.ui.common.LocalAppGraph
+import ai.hev.app.ui.components.HevIcons
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,13 +38,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.Cloud
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,13 +58,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import ai.hev.app.R
-import ai.hev.app.ui.common.LocalAppGraph
-import ai.hev.app.data.local.prefs.ThemeMode
+import org.jetbrains.compose.resources.stringResource
 
 private data class AccentSwatch(val color: Color)
 
@@ -77,10 +88,10 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.settings)) },
+                title = { Text(stringResource(Res.string.settings)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+                        Icon(HevIcons.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -97,15 +108,15 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
-                SectionLabel(icon = Icons.Outlined.Cloud, title = stringResource(R.string.section_providers))
+                SectionLabel(icon = HevIcons.Cloud, title = stringResource(Res.string.section_providers))
                 Spacer(Modifier.height(8.dp))
                 SettingsNavCard(
-                    title = stringResource(R.string.manage_providers),
+                    title = stringResource(Res.string.manage_providers),
                     onClick = onOpenProviders,
                 )
             }
             item {
-                SectionLabel(icon = Icons.Outlined.Palette, title = stringResource(R.string.section_theme))
+                SectionLabel(icon = HevIcons.Palette, title = stringResource(Res.string.section_theme))
                 Spacer(Modifier.height(8.dp))
                 Card(
                     shape = RoundedCornerShape(14.dp),
@@ -121,7 +132,7 @@ fun SettingsScreen(
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
                         Text(
-                            text = stringResource(R.string.label_appearance),
+                            text = stringResource(Res.string.label_appearance),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -130,26 +141,26 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             ThemeModeChip(
-                                label = stringResource(R.string.theme_dark),
+                                label = stringResource(Res.string.theme_dark),
                                 selected = theme.mode == ThemeMode.DARK,
                                 onClick = { themeStore.setThemeMode(ThemeMode.DARK) },
                                 modifier = Modifier.weight(1f),
                             )
                             ThemeModeChip(
-                                label = stringResource(R.string.theme_light),
+                                label = stringResource(Res.string.theme_light),
                                 selected = theme.mode == ThemeMode.LIGHT,
                                 onClick = { themeStore.setThemeMode(ThemeMode.LIGHT) },
                                 modifier = Modifier.weight(1f),
                             )
                             ThemeModeChip(
-                                label = stringResource(R.string.theme_system),
+                                label = stringResource(Res.string.theme_system),
                                 selected = theme.mode == ThemeMode.SYSTEM,
                                 onClick = { themeStore.setThemeMode(ThemeMode.SYSTEM) },
                                 modifier = Modifier.weight(1f),
                             )
                         }
                         Text(
-                            text = stringResource(R.string.label_accent),
+                            text = stringResource(Res.string.label_accent),
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -183,7 +194,7 @@ fun SettingsScreen(
                 }
             }
             item {
-                SectionLabel(icon = Icons.Outlined.Info, title = stringResource(R.string.section_about))
+                SectionLabel(icon = HevIcons.Info, title = stringResource(Res.string.section_about))
                 Spacer(Modifier.height(8.dp))
                 Card(
                     shape = RoundedCornerShape(14.dp),
@@ -198,9 +209,9 @@ fun SettingsScreen(
                             .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        AboutRow(label = stringResource(R.string.about_app), value = stringResource(R.string.app_name))
-                        AboutRow(label = stringResource(R.string.about_version), value = stringResource(R.string.app_version))
-                        AboutRow(label = stringResource(R.string.about_author), value = stringResource(R.string.app_author))
+                        AboutRow(label = stringResource(Res.string.about_app), value = stringResource(Res.string.app_name))
+                        AboutRow(label = stringResource(Res.string.about_version), value = stringResource(Res.string.app_version))
+                        AboutRow(label = stringResource(Res.string.about_author), value = stringResource(Res.string.app_author))
                     }
                 }
             }
@@ -259,7 +270,7 @@ private fun SettingsNavCard(
                 }
             }
             Icon(
-                Icons.Outlined.ChevronRight,
+                HevIcons.ChevronRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -318,7 +329,7 @@ private fun AccentDot(
         ) {
             if (selected) {
                 Icon(
-                    Icons.Outlined.Check,
+                    HevIcons.Check,
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(18.dp),

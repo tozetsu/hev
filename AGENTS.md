@@ -28,7 +28,7 @@ Both must pass before every commit. App version stays **1.0.0** unless the human
 ## Languages
 
 - Code, comments, commit messages, this file, and README: English
-- English is the only locale: strings live in `values/` only; do not add translations or a language setting
+- English is the only locale: strings live in `shared/src/commonMain/composeResources/values/` only; do not add translations or a language setting
 - The human may converse in another language; that does not change in-repo rules
 
 ## Product UI tone

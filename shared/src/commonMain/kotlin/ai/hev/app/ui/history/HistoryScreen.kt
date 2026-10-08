@@ -1,5 +1,29 @@
 package ai.hev.app.ui.history
 
+import ai.hev.app.domain.decision.DecisionOutcome
+import ai.hev.app.domain.history.HistoryEntry
+import ai.hev.app.resources.Res
+import ai.hev.app.resources.action_cancel
+import ai.hev.app.resources.action_clear
+import ai.hev.app.resources.action_delete
+import ai.hev.app.resources.cd_back
+import ai.hev.app.resources.cd_clear
+import ai.hev.app.resources.clear_history_message
+import ai.hev.app.resources.clear_history_title
+import ai.hev.app.resources.confidence_label
+import ai.hev.app.resources.history
+import ai.hev.app.resources.history_choice
+import ai.hev.app.resources.history_empty
+import ai.hev.app.resources.result_refused
+import ai.hev.app.resources.score_label
+import ai.hev.app.resources.value_na
+import ai.hev.app.resources.yes_probability
+import ai.hev.app.ui.common.LocalAppGraph
+import ai.hev.app.ui.components.HevIcons
+import ai.hev.app.ui.components.formatConfidence
+import ai.hev.app.ui.components.formatPercent
+import ai.hev.app.ui.components.formatScore
+import ai.hev.app.ui.components.formatTimestamp
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,9 +36,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -24,7 +45,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -38,20 +58,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import ai.hev.app.R
-import ai.hev.app.ui.common.LocalAppGraph
-import ai.hev.app.domain.decision.DecisionOutcome
-import ai.hev.app.domain.history.HistoryEntry
-import ai.hev.app.ui.components.formatConfidence
-import ai.hev.app.ui.components.formatPercent
-import ai.hev.app.ui.components.formatScore
-import ai.hev.app.ui.components.formatTimestamp
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,16 +79,16 @@ fun HistoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.history)) },
+                title = { Text(stringResource(Res.string.history)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+                        Icon(HevIcons.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
                     }
                 },
                 actions = {
                     if (items.isNotEmpty()) {
                         IconButton(onClick = { confirmClear = true }) {
-                            Icon(Icons.Outlined.DeleteSweep, contentDescription = stringResource(R.string.cd_clear))
+                            Icon(HevIcons.DeleteSweep, contentDescription = stringResource(Res.string.cd_clear))
                         }
                     }
                 },
@@ -93,7 +105,7 @@ fun HistoryScreen(
                     .padding(padding),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(stringResource(R.string.history_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(Res.string.history_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             LazyColumn(
@@ -104,18 +116,9 @@ fun HistoryScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(items, key = { it.id }) { entry ->
-                    val dismissState = rememberSwipeToDismissBoxState(
-                        confirmValueChange = { value ->
-                            if (value == SwipeToDismissBoxValue.EndToStart ||
-                                value == SwipeToDismissBoxValue.StartToEnd
-                            ) {
-                                scope.launch { repo.deleteHistory(entry.id) }
-                                true
-                            } else false
-                        }
-                    )
                     SwipeToDismissBox(
-                        state = dismissState,
+                        state = rememberSwipeToDismissBoxState(),
+                        onDismiss = { scope.launch { repo.deleteHistory(entry.id) } },
                         backgroundContent = {
                             Box(
                                 modifier = Modifier
@@ -123,7 +126,7 @@ fun HistoryScreen(
                                     .padding(horizontal = 8.dp),
                                 contentAlignment = Alignment.CenterEnd,
                             ) {
-                                Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+                                Text(stringResource(Res.string.action_delete), color = MaterialTheme.colorScheme.error)
                             }
                         },
                     ) {
@@ -141,16 +144,16 @@ fun HistoryScreen(
     if (confirmClear) {
         AlertDialog(
             onDismissRequest = { confirmClear = false },
-            title = { Text(stringResource(R.string.clear_history_title)) },
-            text = { Text(stringResource(R.string.clear_history_message)) },
+            title = { Text(stringResource(Res.string.clear_history_title)) },
+            text = { Text(stringResource(Res.string.clear_history_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     scope.launch { repo.clearHistory() }
                     confirmClear = false
-                }) { Text(stringResource(R.string.action_clear)) }
+                }) { Text(stringResource(Res.string.action_clear)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmClear = false }) { Text(stringResource(R.string.action_cancel)) }
+                TextButton(onClick = { confirmClear = false }) { Text(stringResource(Res.string.action_cancel)) }
             },
         )
     }
@@ -199,18 +202,18 @@ private fun HistoryRow(
 
 @Composable
 private fun historySubtitle(entry: HistoryEntry): String {
-    val na = stringResource(R.string.value_na)
+    val na = stringResource(Res.string.value_na)
     return when (val outcome = entry.outcome) {
         is DecisionOutcome.Choice -> listOfNotNull(
-            stringResource(R.string.history_choice, outcome.choice),
-            outcome.confidence?.let { stringResource(R.string.confidence_label, formatConfidence(it, na)) },
+            stringResource(Res.string.history_choice, outcome.choice),
+            outcome.confidence?.let { stringResource(Res.string.confidence_label, formatConfidence(it, na)) },
         ).joinToString(" · ")
         is DecisionOutcome.Score -> listOfNotNull(
-            stringResource(R.string.score_label, formatScore(outcome.score)),
-            outcome.confidence?.let { stringResource(R.string.confidence_label, formatConfidence(it, na)) },
+            stringResource(Res.string.score_label, formatScore(outcome.score)),
+            outcome.confidence?.let { stringResource(Res.string.confidence_label, formatConfidence(it, na)) },
         ).joinToString(" · ")
-        is DecisionOutcome.YesNo -> stringResource(R.string.yes_probability, formatPercent(outcome.probability))
-        DecisionOutcome.Refused -> stringResource(R.string.result_refused)
+        is DecisionOutcome.YesNo -> stringResource(Res.string.yes_probability, formatPercent(outcome.probability))
+        DecisionOutcome.Refused -> stringResource(Res.string.result_refused)
         null -> na
     }
 }
