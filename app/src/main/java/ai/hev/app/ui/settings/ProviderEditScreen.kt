@@ -20,11 +20,15 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -130,7 +134,12 @@ fun ProviderEditScreen(
                 )
             }
             item {
-                Field(state.model, vm::setModel, R.string.label_model)
+                ModelField(
+                    value = state.model,
+                    options = state.modelOptions,
+                    onValueChange = vm::setModel,
+                    onOpen = vm::loadModels,
+                )
             }
             item {
                 state.error?.let {
@@ -241,6 +250,49 @@ private fun Field(
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         shape = RoundedCornerShape(12.dp),
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ModelField(
+    value: String,
+    options: List<String>,
+    onValueChange: (String) -> Unit,
+    onOpen: () -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val showMenu = expanded && options.isNotEmpty()
+    ExposedDropdownMenuBox(
+        expanded = showMenu,
+        onExpandedChange = {
+            expanded = it
+            if (it) onOpen()
+        },
+        modifier = Modifier.padding(horizontal = 20.dp),
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text(stringResource(R.string.label_model)) },
+            singleLine = true,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(showMenu) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryEditable),
+            shape = RoundedCornerShape(12.dp),
+        )
+        ExposedDropdownMenu(expanded = showMenu, onDismissRequest = { expanded = false }) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option) },
+                    onClick = {
+                        onValueChange(option)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
 }
 
 @Composable

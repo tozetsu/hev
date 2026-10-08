@@ -4,6 +4,7 @@ import ai.hev.app.data.local.db.HistoryDao
 import ai.hev.app.data.local.db.HistoryMapper
 import ai.hev.app.data.local.prefs.ProviderStore
 import ai.hev.app.data.remote.DecisionClient
+import ai.hev.app.data.remote.ModelCatalog
 import ai.hev.app.domain.decision.ChoiceOption
 import ai.hev.app.domain.decision.DecisionRequest
 import ai.hev.app.domain.decision.Question
@@ -16,6 +17,7 @@ import kotlinx.coroutines.withContext
 
 class HevRepository(
     private val client: DecisionClient,
+    private val modelCatalog: ModelCatalog,
     private val historyDao: HistoryDao,
     private val providerStore: ProviderStore,
 ) {
@@ -50,6 +52,10 @@ class HevRepository(
         )
         return historyDao.insert(HistoryMapper.toEntity(entry))
     }
+
+    /** Models offered at [modelsUrl]; throws [ai.hev.app.domain.decision.DecisionError] on failure. */
+    suspend fun listModels(modelsUrl: String, endpoint: String, apiKey: String): List<String> =
+        modelCatalog.fetch(modelsUrl, endpoint, apiKey)
 
     suspend fun getHistory(id: Long): HistoryEntry? =
         withContext(Dispatchers.IO) { historyDao.getById(id)?.let(HistoryMapper::toDomain) }

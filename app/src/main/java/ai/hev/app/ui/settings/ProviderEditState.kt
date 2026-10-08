@@ -18,8 +18,12 @@ data class ProviderEditState(
     val modelsUrl: String,
     val apiKey: String,
     val model: String,
+    /** Models listed by the vendor's models endpoint, once loaded. */
+    val fetchedModels: List<String> = emptyList(),
     @StringRes val error: Int? = null,
 ) {
+    val modelOptions: List<String> get() = (fetchedModels + preset?.models.orEmpty()).distinct()
+
     val isCustom: Boolean get() = preset == null
     val apiKeyRequired: Boolean get() = preset?.apiKeyRequired ?: false
 
@@ -34,6 +38,7 @@ data class ProviderEditState(
             endpoint = preset.endpoint,
             modelsUrl = preset.modelsUrl.orEmpty(),
             model = preset.models.first(),
+            fetchedModels = emptyList(),
         )
     }
 

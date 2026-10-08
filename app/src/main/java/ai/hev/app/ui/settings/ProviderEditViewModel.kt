@@ -2,14 +2,18 @@ package ai.hev.app.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import ai.hev.app.data.repository.HevRepository
+import ai.hev.app.domain.decision.DecisionError
 import ai.hev.app.domain.provider.DecisionProtocol
 import ai.hev.app.domain.provider.ProviderPreset
 import ai.hev.app.domain.provider.ProviderPresets
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 class ProviderEditViewModel(
@@ -34,6 +38,28 @@ class ProviderEditViewModel(
     fun setModelsUrl(value: String) = edit { it.copy(modelsUrl = value) }
     fun setApiKey(value: String) = edit { it.copy(apiKey = value) }
     fun setModel(value: String) = edit { it.copy(model = value) }
+
+    private var modelsRequest: List<String>? = null
+    private var modelsJob: Job? = null
+
+    /** Loads the vendor's model list once per URL and key; failures leave manual entry. */
+    fun loadModels() {
+        val current = _state.value
+        if (current.modelsUrl.isBlank()) return
+        val request = listOf(current.modelsUrl.trim(), current.endpoint.trim(), current.apiKey.trim())
+        if (request == modelsRequest) return
+        modelsRequest = request
+        modelsJob?.cancel()
+        modelsJob = viewModelScope.launch {
+            val (modelsUrl, endpoint, apiKey) = request
+            try {
+                val models = repo.listModels(modelsUrl, endpoint, apiKey)
+                _state.update { it.copy(fetchedModels = models) }
+            } catch (_: DecisionError) {
+                modelsRequest = null
+            }
+        }
+    }
 
     /** Saves and returns true, or shows the first problem and returns false. */
     fun save(): Boolean {

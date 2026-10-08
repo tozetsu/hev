@@ -67,4 +67,13 @@ class ProviderEditStateTest {
         assertEquals("k", config.apiKey)
         assertNull(config.modelsUrl)
     }
+
+    @Test
+    fun `model options put fetched models first and keep suggestions`() {
+        val state = typesafe.copy(fetchedModels = listOf("jev-1.13.0", "jev-latest"))
+
+        assertEquals(listOf("jev-1.13.0", "jev-latest", "jev-preview"), state.modelOptions)
+        assertEquals(ProviderPresets.Ollama.models, state.withPreset(ProviderPresets.Ollama).modelOptions)
+        assertEquals(emptyList<String>(), state.withPreset(null).copy(fetchedModels = emptyList()).modelOptions)
+    }
 }

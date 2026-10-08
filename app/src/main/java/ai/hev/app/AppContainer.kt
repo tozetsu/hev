@@ -5,6 +5,8 @@ import ai.hev.app.data.local.db.HevDatabase
 import ai.hev.app.data.local.prefs.ProviderStore
 import ai.hev.app.data.local.prefs.ThemeStore
 import ai.hev.app.data.remote.DecisionClient
+import ai.hev.app.data.remote.ModelCatalog
+import ai.hev.app.data.remote.http.HttpTransport
 import ai.hev.app.data.repository.HevRepository
 
 class AppContainer(context: Context) {
@@ -13,8 +15,11 @@ class AppContainer(context: Context) {
 
     val themeStore = ThemeStore(context)
 
+    private val transport = HttpTransport()
+
     val repository = HevRepository(
-        client = DecisionClient(),
+        client = DecisionClient(transport),
+        modelCatalog = ModelCatalog(transport),
         historyDao = db.historyDao(),
         providerStore = providerStore,
     )
