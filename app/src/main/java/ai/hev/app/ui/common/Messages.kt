@@ -1,14 +1,17 @@
 package ai.hev.app.ui.common
 
-import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
 import ai.hev.app.R
 import ai.hev.app.domain.decision.DecisionError
 import ai.hev.app.domain.decision.DecisionKind
 import ai.hev.app.domain.decision.DraftIssue
+import ai.hev.app.domain.provider.ProviderIssue
 
 /** Short headline plus the server's own message when there is one. */
-fun DecisionError.message(context: Context): String {
-    val headline = context.getString(
+@Composable
+fun DecisionError.text(): String {
+    val headline = stringResource(
         when (this) {
             is DecisionError.Unauthorized -> R.string.error_unauthorized
             is DecisionError.InvalidRequest -> R.string.error_invalid_request
@@ -21,20 +24,31 @@ fun DecisionError.message(context: Context): String {
         },
     )
     return when (this) {
-        is DecisionError.Http -> "${context.getString(R.string.error_http_status, headline, status)}\n$detail"
+        is DecisionError.Http -> "${stringResource(R.string.error_http_status, headline, status)}\n$detail"
         else -> headline
     }
 }
 
-fun DraftIssue.message(context: Context): String = when (this) {
-    DraftIssue.UnsupportedKind -> context.getString(R.string.error_kind_unsupported)
-    DraftIssue.MissingQuestion -> context.getString(R.string.error_question)
-    is DraftIssue.ItemCount -> context.getString(
+@Composable
+fun DraftIssue.text(): String = when (this) {
+    DraftIssue.UnsupportedKind -> stringResource(R.string.error_kind_unsupported)
+    DraftIssue.MissingQuestion -> stringResource(R.string.error_question)
+    is DraftIssue.ItemCount -> stringResource(
         if (kind == DecisionKind.Score) R.string.error_levels_range else R.string.error_options_range,
         range.first,
         range.last,
     )
-    is DraftIssue.BlankItem -> context.getString(
+    is DraftIssue.BlankItem -> stringResource(
         if (kind == DecisionKind.Score) R.string.error_levels_empty else R.string.error_options_empty,
     )
 }
+
+@Composable
+fun ProviderIssue.text(): String = stringResource(
+    when (this) {
+        ProviderIssue.MissingName -> R.string.error_name_required
+        ProviderIssue.InvalidEndpoint -> R.string.error_endpoint_invalid
+        ProviderIssue.MissingApiKey -> R.string.error_api_key
+        ProviderIssue.MissingModel -> R.string.error_model_required
+    },
+)

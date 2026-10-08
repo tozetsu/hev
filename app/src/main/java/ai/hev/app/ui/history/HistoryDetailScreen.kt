@@ -22,10 +22,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import ai.hev.app.HevApp
 import ai.hev.app.R
+import ai.hev.app.ui.common.LocalAppGraph
 import ai.hev.app.domain.history.HistoryEntry
 import ai.hev.app.ui.result.ResultContent
 import kotlinx.coroutines.launch
@@ -36,7 +35,7 @@ fun HistoryDetailScreen(
     historyId: Long,
     onBack: () -> Unit,
 ) {
-    val repo = (LocalContext.current.applicationContext as HevApp).container.repository
+    val repo = LocalAppGraph.current.repository
     var entry by remember { mutableStateOf<HistoryEntry?>(null) }
     var confirmDelete by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()

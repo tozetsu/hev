@@ -1,7 +1,6 @@
 package ai.hev.app.ui.settings
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import ai.hev.app.data.repository.HevRepository
 import ai.hev.app.domain.decision.DecisionError
@@ -81,12 +80,4 @@ class ProviderEditViewModel(
 
     private fun edit(transform: (ProviderEditState) -> ProviderEditState) =
         _state.update { transform(it).copy(error = null) }
-
-    companion object {
-        fun factory(repo: HevRepository, providerId: String?) = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                ProviderEditViewModel(repo, providerId) as T
-        }
-    }
 }

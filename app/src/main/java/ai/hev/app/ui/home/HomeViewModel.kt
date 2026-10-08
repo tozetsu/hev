@@ -1,21 +1,18 @@
 package ai.hev.app.ui.home
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import ai.hev.app.R
 import ai.hev.app.data.repository.HevRepository
 import ai.hev.app.domain.decision.DecisionDraft
 import ai.hev.app.domain.decision.DecisionError
 import ai.hev.app.domain.decision.DecisionItems
 import ai.hev.app.domain.decision.DecisionKind
+import ai.hev.app.domain.decision.DraftIssue
 import ai.hev.app.domain.decision.ModelCapabilities
 import ai.hev.app.domain.decision.parseStructuredOptionLines
 import ai.hev.app.domain.provider.Endpoints
 import ai.hev.app.domain.provider.ProviderConfig
-import ai.hev.app.ui.common.message
+import ai.hev.app.domain.provider.ProviderIssue
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -35,23 +32,29 @@ data class HomeUiState(
     val activeProvider: ProviderConfig? = null,
     val capabilities: ModelCapabilities = ModelCapabilities.Lenient,
     val loading: Boolean = false,
-    val error: String? = null,
+    val error: HomeError? = null,
 ) {
     val itemRange: IntRange? get() = capabilities.itemRange(draft.kind)
     val canAddItem: Boolean get() = itemRange?.let { draft.items.size < it.last } ?: false
     val canRemoveItem: Boolean get() = itemRange?.let { draft.items.size > it.first } ?: false
 }
 
+/** Why the last submit or import did not go through. */
+sealed interface HomeError {
+    data object NoProvider : HomeError
+    data class Provider(val issue: ProviderIssue) : HomeError
+    data class Draft(val issue: DraftIssue) : HomeError
+    data class TooFewOptions(val min: Int) : HomeError
+    data class Request(val error: DecisionError) : HomeError
+}
+
 private data class FormState(
     val draft: DecisionDraft,
     val loading: Boolean = false,
-    val error: String? = null,
+    val error: HomeError? = null,
 )
 
-class HomeViewModel(
-    application: Application,
-    private val repo: HevRepository,
-) : AndroidViewModel(application) {
+class HomeViewModel(private val repo: HevRepository) : ViewModel() {
     private val form = MutableStateFlow(FormState(HomeUiState().draft))
 
     val uiState: StateFlow<HomeUiState> = combine(
@@ -70,8 +73,6 @@ class HomeViewModel(
             error = f.error,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
-
-    private val context get() = getApplication<Application>()
 
     fun setKind(kind: DecisionKind) = editDraft { it.withKind(kind) }
 
@@ -97,7 +98,7 @@ class HomeViewModel(
         val range = uiState.value.capabilities.choiceOptions
         val labels = parseStructuredOptionLines(text, max = range.last)
         if (labels.size < range.first) {
-            form.update { it.copy(error = context.getString(R.string.error_import_min, range.first)) }
+            form.update { it.copy(error = HomeError.TooFewOptions(range.first)) }
             return false
         }
         editDraft { it.copy(items = DecisionItems.choiceOptions(labels)) }
@@ -110,10 +111,10 @@ class HomeViewModel(
         val state = uiState.value
         val provider = state.activeProvider
         val error = when {
-            provider == null -> context.getString(R.string.error_configure_provider)
-            !Endpoints.isValid(provider.endpoint) -> context.getString(R.string.error_endpoint_invalid)
-            provider.requiresApiKey && provider.apiKey.isBlank() -> context.getString(R.string.error_api_key)
-            else -> state.draft.validate(state.capabilities)?.message(context)
+            provider == null -> HomeError.NoProvider
+            !Endpoints.isValid(provider.endpoint) -> HomeError.Provider(ProviderIssue.InvalidEndpoint)
+            provider.requiresApiKey && provider.apiKey.isBlank() -> HomeError.Provider(ProviderIssue.MissingApiKey)
+            else -> state.draft.validate(state.capabilities)?.let(HomeError::Draft)
         }
         if (error != null || provider == null) {
             form.update { it.copy(error = error) }
@@ -126,7 +127,7 @@ class HomeViewModel(
                 onSuccess(repo.decide(provider, request))
                 null
             } catch (e: DecisionError) {
-                e.message(context)
+                HomeError.Request(e)
             }
             form.update { it.copy(loading = false, error = failure) }
         }
@@ -136,14 +137,6 @@ class HomeViewModel(
     private fun editDraft(transform: (DecisionDraft) -> DecisionDraft) {
         val capabilities = uiState.value.capabilities
         form.update { it.copy(draft = transform(it.draft.fittedTo(capabilities)), error = null) }
-    }
-
-    companion object {
-        fun factory(app: Application, repo: HevRepository) = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                HomeViewModel(app, repo) as T
-        }
     }
 }
 

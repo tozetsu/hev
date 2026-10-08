@@ -1,7 +1,7 @@
 package ai.hev.app.ui.settings
 
-import ai.hev.app.R
 import ai.hev.app.domain.provider.DecisionProtocol
+import ai.hev.app.domain.provider.ProviderIssue
 import ai.hev.app.domain.provider.ProviderPresets
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -40,10 +40,10 @@ class ProviderEditStateTest {
 
     @Test
     fun `validation order`() {
-        assertEquals(R.string.error_name_required, typesafe.copy(name = " ").validate())
-        assertEquals(R.string.error_endpoint_invalid, typesafe.withPreset(ProviderPresets.AlibabaBeijing).validate())
-        assertEquals(R.string.error_api_key, typesafe.validate())
-        assertEquals(R.string.error_model_required, typesafe.copy(apiKey = "k", model = "").validate())
+        assertEquals(ProviderIssue.MissingName, typesafe.copy(name = " ").validate())
+        assertEquals(ProviderIssue.InvalidEndpoint, typesafe.withPreset(ProviderPresets.AlibabaBeijing).validate())
+        assertEquals(ProviderIssue.MissingApiKey, typesafe.validate())
+        assertEquals(ProviderIssue.MissingModel, typesafe.copy(apiKey = "k", model = "").validate())
         assertNull(typesafe.copy(apiKey = "k").validate())
     }
 

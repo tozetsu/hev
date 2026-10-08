@@ -33,14 +33,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import ai.hev.app.HevApp
 import ai.hev.app.R
+import ai.hev.app.ui.common.LocalAppGraph
 import ai.hev.app.domain.provider.ProviderConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -50,7 +49,7 @@ fun ProvidersScreen(
     onEditProvider: (String) -> Unit,
     onAddProvider: () -> Unit,
 ) {
-    val repo = (LocalContext.current.applicationContext as HevApp).container.repository
+    val repo = LocalAppGraph.current.repository
     val providers by repo.providers.collectAsStateWithLifecycle()
     val activeId by repo.activeProviderId.collectAsStateWithLifecycle()
 

@@ -44,7 +44,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -52,8 +51,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import ai.hev.app.HevApp
 import ai.hev.app.R
+import ai.hev.app.ui.common.LocalAppGraph
+import ai.hev.app.ui.common.text
 import ai.hev.app.domain.provider.DecisionProtocol
 import ai.hev.app.domain.provider.ProviderPreset
 import ai.hev.app.domain.provider.ProviderPresets
@@ -65,11 +65,10 @@ fun ProviderEditScreen(
     providerId: String,
     onBack: () -> Unit,
 ) {
-    val repo = (LocalContext.current.applicationContext as HevApp).container.repository
-    val vm: ProviderEditViewModel = viewModel(
-        key = providerId,
-        factory = ProviderEditViewModel.factory(repo, providerId.takeUnless { it == Routes.NEW_PROVIDER }),
-    )
+    val repo = LocalAppGraph.current.repository
+    val vm = viewModel(key = providerId) {
+        ProviderEditViewModel(repo, providerId.takeUnless { it == Routes.NEW_PROVIDER })
+    }
     val state by vm.state.collectAsStateWithLifecycle()
     var confirmDelete by remember { mutableStateOf(false) }
 
@@ -144,7 +143,7 @@ fun ProviderEditScreen(
             item {
                 state.error?.let {
                     Text(
-                        text = stringResource(it),
+                        text = it.text(),
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
                     )

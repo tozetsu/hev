@@ -50,14 +50,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import ai.hev.app.HevApp
 import ai.hev.app.R
+import ai.hev.app.ui.common.LocalAppGraph
+import ai.hev.app.ui.common.text
 import ai.hev.app.domain.decision.DecisionKind
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,8 +67,8 @@ fun HomeScreen(
     onOpenHistory: () -> Unit,
     onResult: (Long) -> Unit,
 ) {
-    val app = LocalContext.current.applicationContext as HevApp
-    val vm: HomeViewModel = viewModel(factory = HomeViewModel.factory(app, app.container.repository))
+    val repo = LocalAppGraph.current.repository
+    val vm = viewModel { HomeViewModel(repo) }
     val state by vm.uiState.collectAsStateWithLifecycle()
     val notConfigured = stringResource(R.string.provider_not_configured)
     var showImportDialog by remember { mutableStateOf(false) }
@@ -201,9 +201,9 @@ fun HomeScreen(
                 }
             }
             item {
-                if (state.error != null) {
+                state.error?.let { error ->
                     Text(
-                        text = state.error!!,
+                        text = error.text(),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyMedium,
                     )
@@ -342,3 +342,12 @@ private val DecisionKind.labelRes: Int
         DecisionKind.Score -> R.string.type_score
         DecisionKind.YesNo -> R.string.type_yes_no
     }
+
+@Composable
+private fun HomeError.text(): String = when (this) {
+    HomeError.NoProvider -> stringResource(R.string.error_configure_provider)
+    is HomeError.Provider -> issue.text()
+    is HomeError.Draft -> issue.text()
+    is HomeError.TooFewOptions -> stringResource(R.string.error_import_min, min)
+    is HomeError.Request -> error.text()
+}

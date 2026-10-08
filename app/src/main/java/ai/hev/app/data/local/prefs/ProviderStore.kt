@@ -1,23 +1,18 @@
 package ai.hev.app.data.local.prefs
 
-import android.content.Context
-import android.content.SharedPreferences
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
 import ai.hev.app.domain.provider.ProviderConfig
 import ai.hev.app.domain.provider.ProviderPresets
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.util.UUID
+import kotlin.uuid.Uuid
 
-class ProviderStore(context: Context) {
-    private val prefs: SharedPreferences = createEncryptedPrefs(context)
-
-    private val _providers = MutableStateFlow(loadProviders())
+/** The configured providers as observable state, written through to [storage]. */
+class ProviderStore(private val storage: ProviderStorage) {
+    private val _providers = MutableStateFlow(storage.loadProviders())
     val providers: StateFlow<List<ProviderConfig>> = _providers.asStateFlow()
 
-    private val _activeId = MutableStateFlow(prefs.getString(KEY_ACTIVE, null))
+    private val _activeId = MutableStateFlow(storage.loadActiveId())
     val activeId: StateFlow<String?> = _activeId.asStateFlow()
 
     val activeProvider: ProviderConfig?
@@ -43,41 +38,19 @@ class ProviderStore(context: Context) {
     }
 
     fun setActive(id: String?) {
-        prefs.edit().putString(KEY_ACTIVE, id).apply()
+        storage.saveActiveId(id)
         _activeId.value = id
     }
 
     fun createDefaultIfEmpty() {
         if (_providers.value.isNotEmpty()) return
-        val def = ProviderPresets.TypeSafe.newProvider(UUID.randomUUID().toString())
+        val def = ProviderPresets.TypeSafe.newProvider(Uuid.random().toString())
         upsert(def)
         setActive(def.id)
     }
 
     private fun persist(list: List<ProviderConfig>) {
-        prefs.edit().putString(KEY_PROVIDERS, ProviderCodec.encode(list)).apply()
+        storage.saveProviders(list)
         _providers.value = list
-    }
-
-    private fun loadProviders(): List<ProviderConfig> =
-        prefs.getString(KEY_PROVIDERS, null)?.let(ProviderCodec::decode).orEmpty()
-
-    companion object {
-        private const val PREFS_NAME = "hev_secure_prefs"
-        private const val KEY_PROVIDERS = "providers_json"
-        private const val KEY_ACTIVE = "active_provider_id"
-
-        private fun createEncryptedPrefs(context: Context): SharedPreferences {
-            val masterKey = MasterKey.Builder(context)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build()
-            return EncryptedSharedPreferences.create(
-                context,
-                PREFS_NAME,
-                masterKey,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM,
-            )
-        }
     }
 }

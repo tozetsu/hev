@@ -44,13 +44,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import ai.hev.app.HevApp
 import ai.hev.app.R
+import ai.hev.app.ui.common.LocalAppGraph
 import ai.hev.app.data.local.prefs.ThemeMode
 
 private data class AccentSwatch(val color: Color)
@@ -72,10 +71,8 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenProviders: () -> Unit,
 ) {
-    val container = (LocalContext.current.applicationContext as HevApp).container
-    val themeStore = container.themeStore
-    val themeMode by themeStore.themeMode.collectAsStateWithLifecycle()
-    val accentArgb by themeStore.accentArgb.collectAsStateWithLifecycle()
+    val themeStore = LocalAppGraph.current.themeStore
+    val theme by themeStore.settings.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -134,19 +131,19 @@ fun SettingsScreen(
                         ) {
                             ThemeModeChip(
                                 label = stringResource(R.string.theme_dark),
-                                selected = themeMode == ThemeMode.DARK,
+                                selected = theme.mode == ThemeMode.DARK,
                                 onClick = { themeStore.setThemeMode(ThemeMode.DARK) },
                                 modifier = Modifier.weight(1f),
                             )
                             ThemeModeChip(
                                 label = stringResource(R.string.theme_light),
-                                selected = themeMode == ThemeMode.LIGHT,
+                                selected = theme.mode == ThemeMode.LIGHT,
                                 onClick = { themeStore.setThemeMode(ThemeMode.LIGHT) },
                                 modifier = Modifier.weight(1f),
                             )
                             ThemeModeChip(
                                 label = stringResource(R.string.theme_system),
-                                selected = themeMode == ThemeMode.SYSTEM,
+                                selected = theme.mode == ThemeMode.SYSTEM,
                                 onClick = { themeStore.setThemeMode(ThemeMode.SYSTEM) },
                                 modifier = Modifier.weight(1f),
                             )
@@ -163,7 +160,7 @@ fun SettingsScreen(
                             AccentSwatches.take(4).forEach { swatch ->
                                 AccentDot(
                                     color = swatch.color,
-                                    selected = accentArgb == swatch.color.toArgb(),
+                                    selected = theme.accentArgb == swatch.color.toArgb(),
                                     onClick = { themeStore.setAccentArgb(swatch.color.toArgb()) },
                                     modifier = Modifier.weight(1f),
                                 )
@@ -176,7 +173,7 @@ fun SettingsScreen(
                             AccentSwatches.drop(4).forEach { swatch ->
                                 AccentDot(
                                     color = swatch.color,
-                                    selected = accentArgb == swatch.color.toArgb(),
+                                    selected = theme.accentArgb == swatch.color.toArgb(),
                                     onClick = { themeStore.setAccentArgb(swatch.color.toArgb()) },
                                     modifier = Modifier.weight(1f),
                                 )

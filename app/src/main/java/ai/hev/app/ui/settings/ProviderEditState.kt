@@ -1,10 +1,9 @@
 package ai.hev.app.ui.settings
 
-import androidx.annotation.StringRes
-import ai.hev.app.R
 import ai.hev.app.domain.provider.DecisionProtocol
 import ai.hev.app.domain.provider.Endpoints
 import ai.hev.app.domain.provider.ProviderConfig
+import ai.hev.app.domain.provider.ProviderIssue
 import ai.hev.app.domain.provider.ProviderPreset
 
 data class ProviderEditState(
@@ -20,7 +19,7 @@ data class ProviderEditState(
     val model: String,
     /** Models listed by the vendor's models endpoint, once loaded. */
     val fetchedModels: List<String> = emptyList(),
-    @StringRes val error: Int? = null,
+    val error: ProviderIssue? = null,
 ) {
     val modelOptions: List<String> get() = (fetchedModels + preset?.models.orEmpty()).distinct()
 
@@ -43,12 +42,11 @@ data class ProviderEditState(
     }
 
     /** First problem that keeps this provider from being saved, or null. */
-    @StringRes
-    fun validate(): Int? = when {
-        name.isBlank() -> R.string.error_name_required
-        !Endpoints.isValid(endpoint) -> R.string.error_endpoint_invalid
-        apiKeyRequired && apiKey.isBlank() -> R.string.error_api_key
-        model.isBlank() -> R.string.error_model_required
+    fun validate(): ProviderIssue? = when {
+        name.isBlank() -> ProviderIssue.MissingName
+        !Endpoints.isValid(endpoint) -> ProviderIssue.InvalidEndpoint
+        apiKeyRequired && apiKey.isBlank() -> ProviderIssue.MissingApiKey
+        model.isBlank() -> ProviderIssue.MissingModel
         else -> null
     }
 

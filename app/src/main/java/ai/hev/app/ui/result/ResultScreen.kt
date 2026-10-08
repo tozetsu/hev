@@ -30,13 +30,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import ai.hev.app.HevApp
 import ai.hev.app.R
+import ai.hev.app.ui.common.LocalAppGraph
 import ai.hev.app.domain.decision.DecisionOutcome
 import ai.hev.app.domain.history.HistoryEntry
 import ai.hev.app.ui.components.MetaChip
@@ -52,11 +51,11 @@ fun ResultScreen(
     onBack: () -> Unit,
     onOpenHistory: () -> Unit,
 ) {
-    val app = LocalContext.current.applicationContext as HevApp
+    val repo = LocalAppGraph.current.repository
     var entry by remember { mutableStateOf<HistoryEntry?>(null) }
 
     LaunchedEffect(historyId) {
-        entry = app.container.repository.getHistory(historyId)
+        entry = repo.getHistory(historyId)
     }
 
     Scaffold(
