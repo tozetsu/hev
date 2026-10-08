@@ -1,5 +1,6 @@
 package ai.hev.app.ui.theme
 
+import ai.hev.app.ui.common.DesktopStyles
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -87,6 +88,7 @@ fun HevTheme(
     MaterialTheme(
         colorScheme = if (darkTheme) hevDarkColors(accent) else hevLightColors(accent),
         typography = HevTypography,
-        content = content,
-    )
+    ) {
+        DesktopStyles(content)
+    }
 }

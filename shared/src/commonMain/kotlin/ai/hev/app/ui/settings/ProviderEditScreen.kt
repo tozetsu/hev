@@ -9,7 +9,6 @@ import ai.hev.app.resources.action_delete
 import ai.hev.app.resources.action_hide
 import ai.hev.app.resources.action_save
 import ai.hev.app.resources.action_show
-import ai.hev.app.resources.cd_back
 import ai.hev.app.resources.cd_delete
 import ai.hev.app.resources.delete_provider_message
 import ai.hev.app.resources.delete_provider_title
@@ -26,18 +25,19 @@ import ai.hev.app.resources.provider_edit
 import ai.hev.app.resources.provider_new
 import ai.hev.app.ui.common.LocalAppGraph
 import ai.hev.app.ui.common.text
+import ai.hev.app.ui.components.ActionIcon
+import ai.hev.app.ui.components.BackButton
 import ai.hev.app.ui.components.HevIcons
+import ai.hev.app.ui.components.ScrollColumn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,13 +46,11 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -93,25 +91,22 @@ fun ProviderEditScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(if (state.isNew) Res.string.provider_new else Res.string.provider_edit)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(HevIcons.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
-                    }
-                },
+                navigationIcon = { BackButton(onBack) },
                 actions = {
                     if (!state.isNew) {
-                        IconButton(onClick = { confirmDelete = true }) {
-                            Icon(HevIcons.Delete, contentDescription = stringResource(Res.string.cd_delete))
-                        }
+                        ActionIcon(
+                            HevIcons.Delete,
+                            stringResource(Res.string.cd_delete),
+                            onClick = { confirmDelete = true },
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
     ) { padding ->
-        LazyColumn(
+        ScrollColumn(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(padding)
                 .consumeWindowInsets(padding)
                 .imePadding(),

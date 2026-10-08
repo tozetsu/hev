@@ -1,7 +1,5 @@
 package ai.hev.app.ui.settings
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import ai.hev.app.data.local.prefs.SecretStorageException
 import ai.hev.app.data.repository.HevRepository
 import ai.hev.app.domain.decision.DecisionError
@@ -9,13 +7,15 @@ import ai.hev.app.domain.provider.DecisionProtocol
 import ai.hev.app.domain.provider.ProviderIssue
 import ai.hev.app.domain.provider.ProviderPreset
 import ai.hev.app.domain.provider.ProviderPresets
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlin.uuid.Uuid
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.uuid.Uuid
 
 class ProviderEditViewModel(
     private val repo: HevRepository,

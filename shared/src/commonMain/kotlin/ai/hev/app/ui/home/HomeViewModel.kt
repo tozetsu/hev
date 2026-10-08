@@ -1,7 +1,5 @@
 package ai.hev.app.ui.home
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import ai.hev.app.data.repository.HevRepository
 import ai.hev.app.domain.decision.DecisionDraft
 import ai.hev.app.domain.decision.DecisionError
@@ -13,6 +11,8 @@ import ai.hev.app.domain.decision.parseStructuredOptionLines
 import ai.hev.app.domain.provider.Endpoints
 import ai.hev.app.domain.provider.ProviderConfig
 import ai.hev.app.domain.provider.ProviderIssue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -106,6 +106,9 @@ class HomeViewModel(private val repo: HevRepository) : ViewModel() {
     }
 
     fun selectProvider(id: String) = repo.setActiveProvider(id)
+
+    /** Starts over with an empty draft of the same kind. */
+    fun clear() = form.update { it.copy(draft = HomeUiState().draft.withKind(it.draft.kind), error = null) }
 
     fun submit(onSuccess: (Long) -> Unit) {
         val state = uiState.value

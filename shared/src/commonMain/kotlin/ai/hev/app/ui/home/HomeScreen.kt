@@ -29,8 +29,13 @@ import ai.hev.app.resources.type_choice
 import ai.hev.app.resources.type_score
 import ai.hev.app.resources.type_yes_no
 import ai.hev.app.ui.common.LocalAppGraph
+import ai.hev.app.ui.common.Shortcuts
+import ai.hev.app.ui.common.Tooltip
+import ai.hev.app.ui.common.desktopUi
 import ai.hev.app.ui.common.text
+import ai.hev.app.ui.components.ActionIcon
 import ai.hev.app.ui.components.HevIcons
+import ai.hev.app.ui.components.ScrollColumn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -38,14 +43,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -53,12 +56,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -69,16 +71,19 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -86,6 +91,7 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    newDecisions: Flow<Unit>,
     onOpenSettings: (() -> Unit)?,
     onOpenHistory: (() -> Unit)?,
     onResult: (Long) -> Unit,
@@ -96,6 +102,8 @@ fun HomeScreen(
     val notConfigured = stringResource(Res.string.provider_not_configured)
     var showImportDialog by remember { mutableStateOf(false) }
 
+    LaunchedEffect(vm, newDecisions) { newDecisions.collect { vm.clear() } }
+
     Scaffold(
         contentWindowInsets = WindowInsets.safeContent,
         topBar = {
@@ -105,14 +113,15 @@ fun HomeScreen(
                 },
                 actions = {
                     onOpenHistory?.let {
-                        IconButton(onClick = it) {
-                            Icon(HevIcons.History, contentDescription = stringResource(Res.string.cd_history))
-                        }
+                        ActionIcon(HevIcons.History, stringResource(Res.string.cd_history), onClick = it)
                     }
                     onOpenSettings?.let {
-                        IconButton(onClick = it) {
-                            Icon(HevIcons.Settings, contentDescription = stringResource(Res.string.cd_settings))
-                        }
+                        ActionIcon(
+                            HevIcons.Settings,
+                            stringResource(Res.string.cd_settings),
+                            onClick = it,
+                            shortcut = Shortcuts.Settings,
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -121,12 +130,16 @@ fun HomeScreen(
             )
         },
     ) { padding ->
-        LazyColumn(
+        ScrollColumn(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(padding)
                 .consumeWindowInsets(padding)
-                .imePadding(),
+                .imePadding()
+                .onPreviewKeyEvent { event ->
+                    val submit = desktopUi && !state.loading && Shortcuts.Submit.matches(event)
+                    if (submit) vm.submit(onResult)
+                    submit
+                },
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
@@ -217,13 +230,13 @@ fun HomeScreen(
                             singleLine = true,
                             shape = RoundedCornerShape(12.dp),
                         )
-                        IconButton(onClick = { vm.removeItem(item.id) }, enabled = state.canRemoveItem) {
-                            Icon(
-                                HevIcons.RemoveCircleOutline,
-                                contentDescription = stringResource(Res.string.cd_delete),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
+                        ActionIcon(
+                            HevIcons.RemoveCircleOutline,
+                            stringResource(Res.string.cd_delete),
+                            onClick = { vm.removeItem(item.id) },
+                            enabled = state.canRemoveItem,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
             }
@@ -236,22 +249,24 @@ fun HomeScreen(
                     )
                     Spacer(Modifier.height(4.dp))
                 }
-                Button(
-                    onClick = { vm.submit(onResult) },
-                    enabled = !state.loading,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(14.dp),
-                ) {
-                    if (state.loading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(22.dp),
-                            strokeWidth = 2.dp,
-                            color = MaterialTheme.colorScheme.onPrimary,
-                        )
-                    } else {
-                        Text(stringResource(Res.string.action_submit), style = MaterialTheme.typography.titleMedium)
+                Tooltip(Shortcuts.Submit.label) {
+                    Button(
+                        onClick = { vm.submit(onResult) },
+                        enabled = !state.loading,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        shape = RoundedCornerShape(14.dp),
+                    ) {
+                        if (state.loading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(22.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                            )
+                        } else {
+                            Text(stringResource(Res.string.action_submit), style = MaterialTheme.typography.titleMedium)
+                        }
                     }
                 }
                 Spacer(Modifier.height(24.dp))

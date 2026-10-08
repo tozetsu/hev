@@ -6,7 +6,6 @@ import ai.hev.app.resources.Res
 import ai.hev.app.resources.action_cancel
 import ai.hev.app.resources.action_clear
 import ai.hev.app.resources.action_delete
-import ai.hev.app.resources.cd_back
 import ai.hev.app.resources.cd_clear
 import ai.hev.app.resources.clear_history_message
 import ai.hev.app.resources.clear_history_title
@@ -18,8 +17,14 @@ import ai.hev.app.resources.result_refused
 import ai.hev.app.resources.score_label
 import ai.hev.app.resources.value_na
 import ai.hev.app.resources.yes_probability
+import ai.hev.app.ui.common.ContextMenu
 import ai.hev.app.ui.common.LocalAppGraph
+import ai.hev.app.ui.common.MenuAction
+import ai.hev.app.ui.common.handCursor
+import ai.hev.app.ui.components.ActionIcon
+import ai.hev.app.ui.components.BackButton
 import ai.hev.app.ui.components.HevIcons
+import ai.hev.app.ui.components.ScrollColumn
 import ai.hev.app.ui.components.formatConfidence
 import ai.hev.app.ui.components.formatPercent
 import ai.hev.app.ui.components.formatScore
@@ -33,15 +38,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SwipeToDismissBox
@@ -76,23 +78,20 @@ fun HistoryScreen(
     val items by repo.history.collectAsStateWithLifecycle(initialValue = emptyList())
     var confirmClear by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val deleteLabel = stringResource(Res.string.action_delete)
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(Res.string.history)) },
-                navigationIcon = {
-                    onBack?.let {
-                        IconButton(onClick = it) {
-                            Icon(HevIcons.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
-                        }
-                    }
-                },
+                navigationIcon = { onBack?.let { BackButton(it) } },
                 actions = {
                     if (items.isNotEmpty()) {
-                        IconButton(onClick = { confirmClear = true }) {
-                            Icon(HevIcons.DeleteSweep, contentDescription = stringResource(Res.string.cd_clear))
-                        }
+                        ActionIcon(
+                            HevIcons.DeleteSweep,
+                            stringResource(Res.string.cd_clear),
+                            onClick = { confirmClear = true },
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -111,17 +110,16 @@ fun HistoryScreen(
                 Text(stringResource(Res.string.history_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
+            ScrollColumn(
+                modifier = Modifier.padding(padding),
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(items, key = { it.id }) { entry ->
+                    val delete: () -> Unit = { scope.launch { repo.deleteHistory(entry.id) } }
                     SwipeToDismissBox(
                         state = rememberSwipeToDismissBoxState(),
-                        onDismiss = { scope.launch { repo.deleteHistory(entry.id) } },
+                        onDismiss = { delete() },
                         backgroundContent = {
                             Box(
                                 modifier = Modifier
@@ -133,11 +131,13 @@ fun HistoryScreen(
                             }
                         },
                     ) {
-                        HistoryRow(
-                            entry = entry,
-                            timeText = formatTimestamp(entry.createdAt),
-                            onClick = { onOpen(entry.id) },
-                        )
+                        ContextMenu(listOf(MenuAction(deleteLabel, delete))) {
+                            HistoryRow(
+                                entry = entry,
+                                timeText = formatTimestamp(entry.createdAt),
+                                onClick = { onOpen(entry.id) },
+                            )
+                        }
                     }
                 }
             }
@@ -173,7 +173,8 @@ private fun HistoryRow(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .handCursor(),
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(

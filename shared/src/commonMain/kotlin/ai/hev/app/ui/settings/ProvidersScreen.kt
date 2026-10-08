@@ -3,20 +3,21 @@ package ai.hev.app.ui.settings
 import ai.hev.app.domain.provider.ProviderConfig
 import ai.hev.app.resources.Res
 import ai.hev.app.resources.cd_add
-import ai.hev.app.resources.cd_back
 import ai.hev.app.resources.cd_select
 import ai.hev.app.resources.providers_title
 import ai.hev.app.ui.common.LocalAppGraph
+import ai.hev.app.ui.common.handCursor
+import ai.hev.app.ui.components.ActionIcon
+import ai.hev.app.ui.components.BackButton
 import ai.hev.app.ui.components.HevIcons
+import ai.hev.app.ui.components.ScrollColumn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -25,7 +26,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -56,11 +56,7 @@ fun ProvidersScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(Res.string.providers_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(HevIcons.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
-                    }
-                },
+                navigationIcon = { BackButton(onBack) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),
@@ -77,10 +73,8 @@ fun ProvidersScreen(
             }
         },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+        ScrollColumn(
+            modifier = Modifier.padding(padding),
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -108,7 +102,8 @@ private fun ProviderRow(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onEdit),
+            .clickable(onClick = onEdit)
+            .handCursor(),
     ) {
         Row(
             modifier = Modifier
@@ -117,14 +112,12 @@ private fun ProviderRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            IconButton(onClick = onSelect) {
-                Icon(
-                    if (active) HevIcons.CheckCircle else HevIcons.RadioButtonUnchecked,
-                    contentDescription = stringResource(Res.string.cd_select),
-                    tint = if (active) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            ActionIcon(
+                if (active) HevIcons.CheckCircle else HevIcons.RadioButtonUnchecked,
+                stringResource(Res.string.cd_select),
+                onClick = onSelect,
+                tint = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Column(modifier = Modifier.weight(1f)) {
                 Text(provider.name, fontWeight = FontWeight.Medium)
                 Text(

@@ -12,7 +12,6 @@ import ai.hev.app.resources.api_keys_keyring
 import ai.hev.app.resources.app_author
 import ai.hev.app.resources.app_name
 import ai.hev.app.resources.app_version
-import ai.hev.app.resources.cd_back
 import ai.hev.app.resources.label_accent
 import ai.hev.app.resources.label_appearance
 import ai.hev.app.resources.manage_providers
@@ -24,7 +23,10 @@ import ai.hev.app.resources.theme_dark
 import ai.hev.app.resources.theme_light
 import ai.hev.app.resources.theme_system
 import ai.hev.app.ui.common.LocalAppGraph
+import ai.hev.app.ui.common.handCursor
+import ai.hev.app.ui.components.BackButton
 import ai.hev.app.ui.components.HevIcons
+import ai.hev.app.ui.components.ScrollColumn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,12 +36,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -48,7 +48,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -96,23 +95,15 @@ fun SettingsScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(Res.string.settings)) },
-                navigationIcon = {
-                    onBack?.let {
-                        IconButton(onClick = it) {
-                            Icon(HevIcons.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
-                        }
-                    }
-                },
+                navigationIcon = { onBack?.let { BackButton(it) } },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),
             )
         },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+        ScrollColumn(
+            modifier = Modifier.padding(padding),
             contentPadding = PaddingValues(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
@@ -262,7 +253,8 @@ private fun SettingsNavCard(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .handCursor(),
     ) {
         Row(
             modifier = Modifier
@@ -336,7 +328,8 @@ private fun AccentDot(
                         Modifier
                     },
                 )
-                .clickable(onClick = onClick),
+                .clickable(onClick = onClick)
+                .handCursor(),
             contentAlignment = Alignment.Center,
         ) {
             if (selected) {

@@ -5,6 +5,8 @@ import ai.hev.app.AppGraph
 import ai.hev.app.DesktopDirs
 import ai.hev.app.data.local.prefs.SecretStorageException
 import ai.hev.app.ui.HevContent
+import ai.hev.app.ui.common.Shortcuts
+import ai.hev.app.ui.navigation.rememberHevNavigator
 import ai.hev.desktop.rememberPortalDarkTheme
 import ai.hev.desktop.rememberSavedWindowState
 import ai.hev.desktop.resources.Res
@@ -21,14 +23,23 @@ fun main() {
     val dirs = DesktopDirs.fromEnvironment()
     val graph = openGraph(dirs) ?: return
     application {
+        val navigator = rememberHevNavigator()
         Window(
             onCloseRequest = ::exitApplication,
             state = rememberSavedWindowState(dirs.config.resolve("window.json")),
             title = APP_NAME,
             icon = painterResource(Res.drawable.hev),
+            onKeyEvent = { event ->
+                if (Shortcuts.Quit.matches(event)) {
+                    exitApplication()
+                    true
+                } else {
+                    navigator.handleShortcut(event)
+                }
+            },
         ) {
             LaunchedEffect(window) { window.minimumSize = Dimension(MIN_WIDTH, MIN_HEIGHT) }
-            HevContent(graph, systemDark = rememberPortalDarkTheme() ?: isSystemInDarkTheme())
+            HevContent(graph, systemDark = rememberPortalDarkTheme() ?: isSystemInDarkTheme(), navigator = navigator)
         }
     }
 }

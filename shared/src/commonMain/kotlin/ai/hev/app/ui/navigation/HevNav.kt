@@ -36,7 +36,6 @@ import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDe
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.window.core.layout.WindowSizeClass.Companion.HEIGHT_DP_MEDIUM_LOWER_BOUND
@@ -51,8 +50,8 @@ import org.jetbrains.compose.resources.stringResource
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
-fun HevNavDisplay(modifier: Modifier = Modifier) {
-    val backStack = rememberNavBackStack(RouteSaving, Route.Home)
+fun HevNavDisplay(navigator: HevNavigator, modifier: Modifier = Modifier) {
+    val backStack = navigator.backStack
     val back = { backStack.pop() }
     val adaptiveInfo = currentWindowAdaptiveInfoV2()
     val sizeClass = adaptiveInfo.windowSizeClass
@@ -93,6 +92,7 @@ fun HevNavDisplay(modifier: Modifier = Modifier) {
             entryProvider = entryProvider {
                 entry<Route.Home>(metadata = ListDetailSceneStrategy.listPane(Section.Decide)) {
                     HomeScreen(
+                        newDecisions = navigator.newDecisions,
                         onOpenSettings = { backStack.openAbove(Route.Home, Route.Settings) }.takeUnless { rail },
                         onOpenHistory = { backStack.openAbove(Route.Home, Route.History) }.takeUnless { rail },
                         onResult = { id -> backStack.openAbove(Route.Home, Route.Result(id)) },

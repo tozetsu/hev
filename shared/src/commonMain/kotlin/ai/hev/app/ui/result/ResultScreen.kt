@@ -3,7 +3,6 @@ package ai.hev.app.ui.result
 import ai.hev.app.domain.decision.DecisionOutcome
 import ai.hev.app.domain.history.HistoryEntry
 import ai.hev.app.resources.Res
-import ai.hev.app.resources.cd_back
 import ai.hev.app.resources.cd_history
 import ai.hev.app.resources.confidence_label
 import ai.hev.app.resources.input_tokens
@@ -15,9 +14,13 @@ import ai.hev.app.resources.score_label
 import ai.hev.app.resources.value_na
 import ai.hev.app.resources.yes_probability
 import ai.hev.app.ui.common.LocalAppGraph
+import ai.hev.app.ui.common.SelectableText
+import ai.hev.app.ui.components.ActionIcon
+import ai.hev.app.ui.components.BackButton
 import ai.hev.app.ui.components.HevIcons
 import ai.hev.app.ui.components.MetaChip
 import ai.hev.app.ui.components.ProbabilityBar
+import ai.hev.app.ui.components.ScrollColumn
 import ai.hev.app.ui.components.formatConfidence
 import ai.hev.app.ui.components.formatPercent
 import ai.hev.app.ui.components.formatScore
@@ -29,13 +32,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -71,15 +71,9 @@ fun ResultScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(Res.string.result)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(HevIcons.ArrowBack, contentDescription = stringResource(Res.string.cd_back))
-                    }
-                },
+                navigationIcon = { BackButton(onBack) },
                 actions = {
-                    IconButton(onClick = onOpenHistory) {
-                        Icon(HevIcons.History, contentDescription = stringResource(Res.string.cd_history))
-                    }
+                    ActionIcon(HevIcons.History, stringResource(Res.string.cd_history), onClick = onOpenHistory)
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
@@ -107,89 +101,91 @@ fun ResultScreen(
 fun ResultContent(entry: HistoryEntry, modifier: Modifier = Modifier) {
     val labels = remember(entry.items) { entry.items.associate { it.id to it.label } }
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        item {
-            Text(
-                text = entry.instructions,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-            )
-            entry.context?.takeIf { it.isNotBlank() }?.let { context ->
-                Spacer(Modifier.height(8.dp))
+    SelectableText {
+        ScrollColumn(
+            modifier = modifier,
+            contentPadding = PaddingValues(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            item {
                 Text(
-                    text = context,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = entry.instructions,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
                 )
-            }
-        }
-
-        when (val outcome = entry.outcome) {
-            is DecisionOutcome.Choice -> {
-                item { ConfidenceChip(outcome.confidence) }
-                item {
-                    ProbabilityCard {
-                        if (outcome.probabilities.isEmpty()) {
-                            Text(
-                                stringResource(Res.string.no_probability_data),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        outcome.probabilities.entries.sortedByDescending { it.value }.forEach { (id, p) ->
-                            ProbabilityBar(
-                                label = "$id  ${labels[id] ?: ""}".trimEnd(),
-                                probability = p,
-                                highlighted = id == outcome.choice,
-                            )
-                        }
-                    }
+                entry.context?.takeIf { it.isNotBlank() }?.let { context ->
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = context,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
-            is DecisionOutcome.Score -> {
-                item { Headline(stringResource(Res.string.score_label, formatScore(outcome.score))) }
-                item { ConfidenceChip(outcome.confidence) }
-                if (outcome.probabilities.isNotEmpty()) {
+
+            when (val outcome = entry.outcome) {
+                is DecisionOutcome.Choice -> {
+                    item { ConfidenceChip(outcome.confidence) }
                     item {
                         ProbabilityCard {
-                            outcome.probabilities.entries.sortedByDescending { it.value }.forEach { (level, p) ->
+                            if (outcome.probabilities.isEmpty()) {
+                                Text(
+                                    stringResource(Res.string.no_probability_data),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            outcome.probabilities.entries.sortedByDescending { it.value }.forEach { (id, p) ->
                                 ProbabilityBar(
-                                    label = labels[level.toString()] ?: level.toString(),
+                                    label = "$id  ${labels[id] ?: ""}".trimEnd(),
                                     probability = p,
-                                    highlighted = false,
+                                    highlighted = id == outcome.choice,
                                 )
                             }
                         }
                     }
                 }
-            }
-            is DecisionOutcome.YesNo -> {
-                item { Headline(stringResource(Res.string.yes_probability, formatPercent(outcome.probability))) }
-                item {
-                    ProbabilityCard {
-                        ProbabilityBar(label = "", probability = outcome.probability, highlighted = true)
+                is DecisionOutcome.Score -> {
+                    item { Headline(stringResource(Res.string.score_label, formatScore(outcome.score))) }
+                    item { ConfidenceChip(outcome.confidence) }
+                    if (outcome.probabilities.isNotEmpty()) {
+                        item {
+                            ProbabilityCard {
+                                outcome.probabilities.entries.sortedByDescending { it.value }.forEach { (level, p) ->
+                                    ProbabilityBar(
+                                        label = labels[level.toString()] ?: level.toString(),
+                                        probability = p,
+                                        highlighted = false,
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
+                is DecisionOutcome.YesNo -> {
+                    item { Headline(stringResource(Res.string.yes_probability, formatPercent(outcome.probability))) }
+                    item {
+                        ProbabilityCard {
+                            ProbabilityBar(label = "", probability = outcome.probability, highlighted = true)
+                        }
+                    }
+                }
+                DecisionOutcome.Refused -> item { Headline(stringResource(Res.string.result_refused)) }
+                null -> item { Headline(stringResource(Res.string.value_na)) }
             }
-            DecisionOutcome.Refused -> item { Headline(stringResource(Res.string.result_refused)) }
-            null -> item { Headline(stringResource(Res.string.value_na)) }
-        }
 
-        item {
-            val meta = listOfNotNull(
-                entry.providerName?.takeIf { it.isNotBlank() },
-                entry.model?.takeIf { it.isNotBlank() },
-                entry.inputTokens?.let { pluralStringResource(Res.plurals.input_tokens, it, it) },
-            )
-            if (meta.isNotEmpty()) {
-                Text(
-                    text = meta.joinToString(" · "),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+            item {
+                val meta = listOfNotNull(
+                    entry.providerName?.takeIf { it.isNotBlank() },
+                    entry.model?.takeIf { it.isNotBlank() },
+                    entry.inputTokens?.let { pluralStringResource(Res.plurals.input_tokens, it, it) },
                 )
+                if (meta.isNotEmpty()) {
+                    Text(
+                        text = meta.joinToString(" · "),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
