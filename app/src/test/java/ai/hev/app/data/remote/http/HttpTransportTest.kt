@@ -1,6 +1,7 @@
 package ai.hev.app.data.remote.http
 
 import ai.hev.app.domain.decision.DecisionError
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -13,6 +14,7 @@ import org.junit.Before
 import org.junit.Test
 import java.time.Instant
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class HttpTransportTest {
     private val server = MockWebServer()
     private val transport = HttpTransport()

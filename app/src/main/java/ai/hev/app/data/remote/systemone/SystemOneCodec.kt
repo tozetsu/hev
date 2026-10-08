@@ -3,7 +3,7 @@ package ai.hev.app.data.remote.systemone
 import ai.hev.app.data.remote.DecisionCodec
 import ai.hev.app.data.remote.WireJson
 import ai.hev.app.data.remote.decodeWire
-import ai.hev.app.domain.decision.DecisionError
+import ai.hev.app.data.remote.missingField
 import ai.hev.app.domain.decision.DecisionKind
 import ai.hev.app.domain.decision.DecisionOutcome
 import ai.hev.app.domain.decision.DecisionRequest
@@ -42,7 +42,7 @@ object SystemOneCodec : DecisionCodec {
         val response = decodeWire(SystemOneResponse.serializer(), raw)
         val answer = response.answers[questionName]
             ?: response.answers.values.singleOrNull()
-            ?: throw DecisionError.MalformedResponse("Missing answer")
+            ?: missingField("answer")
         return DecisionResult(
             outcome = answer.toOutcome(kind),
             model = response.model,
@@ -53,16 +53,16 @@ object SystemOneCodec : DecisionCodec {
 
     private fun SystemOneAnswer.toOutcome(kind: DecisionKind): DecisionOutcome = when (kind) {
         DecisionKind.Choice -> DecisionOutcome.Choice(
-            choice = choice ?: missing("choice"),
+            choice = choice ?: missingField("choice"),
             probabilities = probabilities.orEmpty(),
             confidence = confidence,
         )
         DecisionKind.Score -> DecisionOutcome.Score(
-            score = score ?: missing("score"),
+            score = score ?: missingField("score"),
             probabilities = probabilities.orEmpty().byLevelIndex(),
             confidence = confidence,
         )
-        DecisionKind.YesNo -> DecisionOutcome.YesNo(probability = noul ?: missing("noul"))
+        DecisionKind.YesNo -> DecisionOutcome.YesNo(probability = noul ?: missingField("noul"))
     }
 
     private val DecisionKind.wireType: String
@@ -80,6 +80,4 @@ object SystemOneCodec : DecisionCodec {
 
     private fun Map<String, Double>.byLevelIndex(): Map<Int, Double> =
         entries.mapNotNull { (level, p) -> level.toIntOrNull()?.let { it to p } }.toMap()
-
-    private fun missing(field: String): Nothing = throw DecisionError.MalformedResponse("Missing $field")
 }

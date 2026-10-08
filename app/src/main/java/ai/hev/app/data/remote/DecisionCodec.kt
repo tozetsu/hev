@@ -26,6 +26,8 @@ internal val WireJson = Json {
     explicitNulls = false
 }
 
+internal fun missingField(field: String): Nothing = throw DecisionError.MalformedResponse("Missing $field")
+
 internal fun <T> decodeWire(deserializer: DeserializationStrategy<T>, raw: String): T = try {
     WireJson.decodeFromString(deserializer, raw)
 } catch (e: SerializationException) {
