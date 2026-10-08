@@ -1,10 +1,11 @@
 package ai.hev.app.data.local.db
 
 import android.app.Application
-import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
+import android.content.Context
 import androidx.room.Room
 import androidx.room.testing.MigrationTestHelper
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import ai.hev.app.domain.decision.DecisionKind
@@ -12,6 +13,7 @@ import ai.hev.app.domain.decision.DecisionOutcome
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,30 +24,35 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(application = Application::class)
 class HevMigrationsTest {
+    private val context: Context = ApplicationProvider.getApplicationContext()
+    private val dbFile = context.getDatabasePath("migration-test.db")
 
     @get:Rule
-    val helper = MigrationTestHelper(InstrumentationRegistry.getInstrumentation(), HevDatabase::class.java)
-
-    private val dbName = "migration-test.db"
+    val helper = MigrationTestHelper(
+        instrumentation = InstrumentationRegistry.getInstrumentation(),
+        file = dbFile,
+        driver = AndroidSQLiteDriver(),
+        databaseClass = HevDatabase::class,
+    )
 
     @Test
     fun `2 to 3 keeps every row and normalises question types`() {
-        helper.createDatabase(dbName, 2).use { db ->
-            db.insert("history", SQLiteDatabase.CONFLICT_NONE, v2Row(1, "choice", choice = "billing"))
-            db.insert("history", SQLiteDatabase.CONFLICT_NONE, v2Row(2, "Score", score = 1.5))
-            db.insert("history", SQLiteDatabase.CONFLICT_NONE, v2Row(3, "noul", noul = 0.9))
-            db.insert("history", SQLiteDatabase.CONFLICT_NONE, v2Row(4, "", choice = "a"))
+        helper.createDatabase(2).use { db ->
+            db.insertV2Row(1, "choice", choice = "billing")
+            db.insertV2Row(2, "Score", score = 1.5)
+            db.insertV2Row(3, "noul", noul = 0.9)
+            db.insertV2Row(4, "", choice = "a")
         }
 
-        helper.runMigrationsAndValidate(dbName, 3, true, *HevMigrations.ALL).use { db ->
-            db.query("SELECT id, questionType, refused, providerId, protocol, inputTokens, rawJson FROM history ORDER BY id")
-                .use { cursor ->
+        helper.runMigrationsAndValidate(3, HevMigrations.ALL.toList()).use { db ->
+            db.prepare("SELECT id, questionType, refused, providerId, protocol, inputTokens, rawJson FROM history ORDER BY id")
+                .use { row ->
                     val types = mutableListOf<String>()
-                    while (cursor.moveToNext()) {
-                        types += cursor.getString(1)
-                        assertEquals(0, cursor.getInt(2))
-                        assertEquals(true, cursor.isNull(3) && cursor.isNull(4) && cursor.isNull(5))
-                        assertEquals("{\"id\":${cursor.getLong(0)}}", cursor.getString(6))
+                    while (row.step()) {
+                        types += row.getText(1)
+                        assertEquals(0L, row.getLong(2))
+                        assertTrue(row.isNull(3) && row.isNull(4) && row.isNull(5))
+                        assertEquals("{\"id\":${row.getLong(0)}}", row.getText(6))
                     }
                     assertEquals(listOf("choice", "score", "yes_no", "choice"), types)
                 }
@@ -54,14 +61,12 @@ class HevMigrationsTest {
 
     @Test
     fun `migrated rows read back through room`() {
-        helper.createDatabase(dbName, 2).use { db ->
-            db.insert("history", SQLiteDatabase.CONFLICT_NONE, v2Row(7, "noul", noul = 0.25))
-        }
-        helper.runMigrationsAndValidate(dbName, 3, true, *HevMigrations.ALL).close()
+        helper.createDatabase(2).use { db -> db.insertV2Row(7, "noul", noul = 0.25) }
+        helper.runMigrationsAndValidate(3, HevMigrations.ALL.toList()).close()
 
-        val room = Room.databaseBuilder(ApplicationProvider.getApplicationContext(), HevDatabase::class.java, dbName)
+        val room = Room.databaseBuilder<HevDatabase>(context, dbFile.path)
+            .setDriver(AndroidSQLiteDriver())
             .addMigrations(*HevMigrations.ALL)
-            .allowMainThreadQueries()
             .build()
         try {
             val entry = runBlocking { room.historyDao().getById(7) }!!.let(HistoryMapper::toDomain)
@@ -75,26 +80,26 @@ class HevMigrationsTest {
         }
     }
 
-    private fun v2Row(
+    private fun SQLiteConnection.insertV2Row(
         id: Long,
         type: String,
         choice: String? = null,
         score: Double? = null,
         noul: Double? = null,
-    ) = ContentValues().apply {
-        put("id", id)
-        put("createdAt", 1_700_000_000_000 + id)
-        put("questionType", type)
-        put("question", "Is it urgent?")
-        putNull("state")
-        put("optionsJson", "[]")
-        put("probabilitiesJson", "{}")
-        putNull("confidence")
-        put("choice", choice)
-        put("score", score)
-        put("noul", noul)
-        put("model", "jev-latest")
-        put("providerName", "TypeSafe")
-        put("rawJson", "{\"id\":$id}")
+    ) = prepare(
+        """
+        INSERT INTO history (id, createdAt, questionType, question, state, optionsJson, probabilitiesJson,
+            confidence, choice, score, noul, model, providerName, rawJson)
+        VALUES (?, ?, ?, 'Is it urgent?', NULL, '[]', '{}', NULL, ?, ?, ?, 'jev-latest', 'TypeSafe', ?)
+        """.trimIndent(),
+    ).use { row ->
+        row.bindLong(1, id)
+        row.bindLong(2, 1_700_000_000_000 + id)
+        row.bindText(3, type)
+        if (choice != null) row.bindText(4, choice) else row.bindNull(4)
+        if (score != null) row.bindDouble(5, score) else row.bindNull(5)
+        if (noul != null) row.bindDouble(6, noul) else row.bindNull(6)
+        row.bindText(7, "{\"id\":$id}")
+        row.step()
     }
 }
