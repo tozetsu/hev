@@ -19,8 +19,9 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
+import mockwebserver3.MockResponse
+import okhttp3.Headers.Companion.headersOf
+import mockwebserver3.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -38,7 +39,7 @@ class VendorMatrixTest {
     private val client = DecisionClient(HttpTransport())
 
     @Before fun setUp() = server.start()
-    @After fun tearDown() = server.shutdown()
+    @After fun tearDown() = server.close()
 
     private data class AnswerCase(
         val preset: ProviderPreset,
@@ -147,7 +148,7 @@ class VendorMatrixTest {
     fun `documented answers decode for every preset`() = runTest {
         answers.forEach { case ->
             val label = "${case.preset.id} ${case.fixture} ${case.answer ?: ""}"
-            server.enqueue(MockResponse().setBody(narrowed(case.preset.protocol, Fixtures.read(case.fixture), case.answer)))
+            server.enqueue(MockResponse(body = narrowed(case.preset.protocol, Fixtures.read(case.fixture), case.answer)))
             val request = request(case.kind, case.preset.models.first())
             val apiKey = if (case.preset.apiKeyRequired) "test-key" else ""
 
@@ -155,16 +156,16 @@ class VendorMatrixTest {
 
             assertEquals(label, case.expected, result.outcome)
             val recorded = server.takeRequest()
-            assertEquals(label, pathOf(case.preset), recorded.path)
-            assertEquals(label, if (apiKey.isEmpty()) null else "Bearer test-key", recorded.getHeader("Authorization"))
-            assertSentQuestion(case.preset.protocol, case.kind, case.preset.models.first(), recorded.body.readUtf8(), label)
+            assertEquals(label, pathOf(case.preset), recorded.target)
+            assertEquals(label, if (apiKey.isEmpty()) null else "Bearer test-key", recorded.headers["Authorization"])
+            assertSentQuestion(case.preset.protocol, case.kind, case.preset.models.first(), recorded.body!!.utf8(), label)
         }
     }
 
     @Test
     fun `usage and model come from the response`() = runTest {
-        server.enqueue(MockResponse().setBody(narrowed(DecisionProtocol.SystemOne, Fixtures.read("perplexity/response.json"), "defect")))
-        server.enqueue(MockResponse().setBody(narrowed(DecisionProtocol.SystemOne, Fixtures.read("alibaba/response.json"), "escalate")))
+        server.enqueue(MockResponse(body = narrowed(DecisionProtocol.SystemOne, Fixtures.read("perplexity/response.json"), "defect")))
+        server.enqueue(MockResponse(body = narrowed(DecisionProtocol.SystemOne, Fixtures.read("alibaba/response.json"), "escalate")))
 
         val perplexity = client.decide(
             DecisionProtocol.SystemOne, urlFor(ProviderPresets.Perplexity), "k", Requests.yesNo("pplx-decider-v1.1-27b"),
@@ -182,7 +183,7 @@ class VendorMatrixTest {
     /** The docs describe the refusal answer but publish no full example. */
     @Test
     fun `refusal decodes as refused`() = runTest {
-        server.enqueue(MockResponse().setBody("""{"answers": [{"type": "refusal", "name": "decision"}]}"""))
+        server.enqueue(MockResponse(body = """{"answers": [{"type": "refusal", "name": "decision"}]}"""))
 
         val result = client.decide(
             DecisionProtocol.OpenAiDecisions, urlFor(ProviderPresets.OpenAi), "k", Requests.choice("gpt-6-luna"),
@@ -252,7 +253,7 @@ class VendorMatrixTest {
     @Test
     fun `documented error bodies map to typed errors`() = runTest {
         errors.forEach { case ->
-            server.enqueue(MockResponse().setResponseCode(case.status).setBody(case.body))
+            server.enqueue(MockResponse(code = case.status, body = case.body))
 
             val error = decideExpectingError(case.preset)
 
@@ -267,8 +268,11 @@ class VendorMatrixTest {
     fun `rate limit is retried once, then surfaced`() = runTest {
         repeat(2) {
             server.enqueue(
-                MockResponse().setResponseCode(429).setHeader("Retry-After", "2")
-                    .setBody(Fixtures.read("perplexity/error_rate_limited.json")),
+                MockResponse(
+                    code = 429,
+                    headers = headersOf("Retry-After", "2"),
+                    body = Fixtures.read("perplexity/error_rate_limited.json"),
+                ),
             )
         }
 
@@ -282,8 +286,8 @@ class VendorMatrixTest {
 
     @Test
     fun `temporary unavailability recovers on retry`() = runTest {
-        server.enqueue(MockResponse().setResponseCode(503))
-        server.enqueue(MockResponse().setBody(Fixtures.read("typesafe/response_noul.json")))
+        server.enqueue(MockResponse(code = 503))
+        server.enqueue(MockResponse(body = Fixtures.read("typesafe/response_noul.json")))
 
         val result = client.decide(
             DecisionProtocol.SystemOne, urlFor(ProviderPresets.TypeSafe), "k", Requests.yesNo("jev-latest"),

@@ -3,8 +3,8 @@ package ai.hev.app.data.remote
 import ai.hev.app.domain.decision.DecisionError
 import ai.hev.app.testing.Fixtures
 import kotlinx.coroutines.test.runTest
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
@@ -60,7 +60,7 @@ class ModelCatalogTest {
     @Test
     fun `fetches with auth from the resolved url`() = runTest {
         val server = MockWebServer()
-        server.enqueue(MockResponse().setBody(Fixtures.read("ollama/tags.json")))
+        server.enqueue(MockResponse(body = Fixtures.read("ollama/tags.json")))
         server.start()
         try {
             val models = ModelCatalog().fetch("/api/tags", server.url("/v1/systemone").toString(), "k")
@@ -68,10 +68,10 @@ class ModelCatalogTest {
             assertEquals(listOf("gemma4"), models)
             val request = server.takeRequest()
             assertEquals("GET", request.method)
-            assertEquals("/api/tags", request.path)
-            assertEquals("Bearer k", request.getHeader("Authorization"))
+            assertEquals("/api/tags", request.target)
+            assertEquals("Bearer k", request.headers["Authorization"])
         } finally {
-            server.shutdown()
+            server.close()
         }
     }
 }

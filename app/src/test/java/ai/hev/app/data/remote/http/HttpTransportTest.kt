@@ -3,8 +3,9 @@ package ai.hev.app.data.remote.http
 import ai.hev.app.domain.decision.DecisionError
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
-import okhttp3.mockwebserver.MockResponse
-import okhttp3.mockwebserver.MockWebServer
+import mockwebserver3.MockResponse
+import okhttp3.Headers.Companion.headersOf
+import mockwebserver3.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -21,7 +22,7 @@ class HttpTransportTest {
     private val url get() = server.url("/v1/systemone").toString()
 
     @Before fun setUp() = server.start()
-    @After fun tearDown() = server.shutdown()
+    @After fun tearDown() = server.close()
 
     private suspend inline fun <reified T : DecisionError> expectError(block: () -> Unit): T {
         try {
@@ -36,31 +37,31 @@ class HttpTransportTest {
 
     @Test
     fun `posts json with bearer auth to the url as given`() = runTest {
-        server.enqueue(MockResponse().setBody("{}"))
+        server.enqueue(MockResponse(body = "{}"))
 
         assertEquals("{}", transport.post("$url?x=1", " key ", """{"a":1}"""))
 
         val recorded = server.takeRequest()
         assertEquals("POST", recorded.method)
-        assertEquals("/v1/systemone?x=1", recorded.path)
-        assertEquals("Bearer key", recorded.getHeader("Authorization"))
-        assertEquals("""{"a":1}""", recorded.body.readUtf8())
-        assertTrue(recorded.getHeader("Content-Type")!!.startsWith("application/json"))
+        assertEquals("/v1/systemone?x=1", recorded.target)
+        assertEquals("Bearer key", recorded.headers["Authorization"])
+        assertEquals("""{"a":1}""", recorded.body?.utf8())
+        assertTrue(recorded.headers["Content-Type"]!!.startsWith("application/json"))
     }
 
     @Test
     fun `omits auth when no key is set`() = runTest {
-        server.enqueue(MockResponse().setBody("{}"))
+        server.enqueue(MockResponse(body = "{}"))
 
         transport.get(url, "")
 
-        assertNull(server.takeRequest().getHeader("Authorization"))
+        assertNull(server.takeRequest().headers["Authorization"])
     }
 
     @Test
     fun `retries once after the requested delay`() = runTest {
-        server.enqueue(MockResponse().setResponseCode(429).setHeader("Retry-After", "3"))
-        server.enqueue(MockResponse().setBody("""{"ok":true}"""))
+        server.enqueue(MockResponse(code = 429, headers = headersOf("Retry-After", "3")))
+        server.enqueue(MockResponse(body = """{"ok":true}"""))
 
         assertEquals("""{"ok":true}""", transport.post(url, "k", "{}"))
 
@@ -70,8 +71,8 @@ class HttpTransportTest {
 
     @Test
     fun `caps long retry delays`() = runTest {
-        server.enqueue(MockResponse().setResponseCode(503).setHeader("Retry-After", "120"))
-        server.enqueue(MockResponse().setBody("{}"))
+        server.enqueue(MockResponse(code = 503, headers = headersOf("Retry-After", "120")))
+        server.enqueue(MockResponse(body = "{}"))
 
         transport.post(url, "k", "{}")
 
@@ -80,8 +81,8 @@ class HttpTransportTest {
 
     @Test
     fun `uses a short default delay without retry-after`() = runTest {
-        server.enqueue(MockResponse().setResponseCode(529))
-        server.enqueue(MockResponse().setBody("{}"))
+        server.enqueue(MockResponse(code = 529))
+        server.enqueue(MockResponse(body = "{}"))
 
         transport.post(url, "k", "{}")
 
@@ -92,7 +93,7 @@ class HttpTransportTest {
     @Test
     fun `second transient failure is surfaced`() = runTest {
         repeat(2) {
-            server.enqueue(MockResponse().setResponseCode(429).setBody("""{"error":{"message":"slow down"}}"""))
+            server.enqueue(MockResponse(code = 429, body = """{"error":{"message":"slow down"}}"""))
         }
 
         val error = expectError<DecisionError.RateLimited> { transport.post(url, "k", "{}") }
@@ -103,7 +104,7 @@ class HttpTransportTest {
 
     @Test
     fun `client errors are not retried`() = runTest {
-        server.enqueue(MockResponse().setResponseCode(422).setBody("""{"detail":"bad"}"""))
+        server.enqueue(MockResponse(code = 422, body = """{"detail":"bad"}"""))
 
         val error = expectError<DecisionError.InvalidRequest> { transport.post(url, "k", "{}") }
 
@@ -122,7 +123,7 @@ class HttpTransportTest {
             502 to DecisionError.Server::class,
             504 to DecisionError.GatewayTimeout::class,
         ).forEach { (status, type) ->
-            server.enqueue(MockResponse().setResponseCode(status).setBody("e$status"))
+            server.enqueue(MockResponse(code = status, body = "e$status"))
             val error = expectError<DecisionError.Http> { transport.post(url, "k", "{}") }
             assertEquals(type, error::class)
             assertEquals("e$status", error.detail)
@@ -132,7 +133,7 @@ class HttpTransportTest {
     @Test
     fun `connection failures become network errors`() = runTest {
         val deadUrl = url
-        server.shutdown()
+        server.close()
 
         expectError<DecisionError.Network> { transport.post(deadUrl, "k", "{}") }
     }

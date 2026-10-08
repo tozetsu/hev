@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "ai.hev.app"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "ai.hev.app"
@@ -74,7 +74,8 @@ dependencies {
 
     implementation(libs.androidx.security.crypto)
 
-    implementation(libs.okhttp)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.okhttp)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
 
