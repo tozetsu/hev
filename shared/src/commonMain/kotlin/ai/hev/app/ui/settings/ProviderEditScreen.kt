@@ -27,7 +27,6 @@ import ai.hev.app.resources.provider_new
 import ai.hev.app.ui.common.LocalAppGraph
 import ai.hev.app.ui.common.text
 import ai.hev.app.ui.components.HevIcons
-import ai.hev.app.ui.navigation.Routes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -81,13 +80,11 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProviderEditScreen(
-    providerId: String,
+    providerId: String?,
     onBack: () -> Unit,
 ) {
     val repo = LocalAppGraph.current.repository
-    val vm = viewModel(key = providerId) {
-        ProviderEditViewModel(repo, providerId.takeUnless { it == Routes.NEW_PROVIDER })
-    }
+    val vm = viewModel { ProviderEditViewModel(repo, providerId) }
     val state by vm.state.collectAsStateWithLifecycle()
     var confirmDelete by remember { mutableStateOf(false) }
 

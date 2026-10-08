@@ -5,7 +5,7 @@ ksp = "2.3.12"
 composeMultiplatform = "1.12.1"
 composeMaterial3 = "1.9.0"
 jetbrainsLifecycle = "2.11.0"
-jetbrainsNavigation = "2.9.2"
+jetbrainsNavigation3 = "1.1.2"
 coreKtx = "1.15.0"
 activityCompose = "1.9.3"
 appcompat = "1.7.0"
@@ -27,7 +27,8 @@ compose-material3 = { group = "org.jetbrains.compose.material3", name = "materia
 compose-components-resources = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "composeMultiplatform" }
 lifecycle-viewmodel-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "jetbrainsLifecycle" }
 lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "jetbrainsLifecycle" }
-navigation-compose = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref = "jetbrainsNavigation" }
+navigation3-ui = { group = "org.jetbrains.androidx.navigation3", name = "navigation3-ui", version.ref = "jetbrainsNavigation3" }
+lifecycle-viewmodel-navigation3 = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel-navigation3", version.ref = "jetbrainsLifecycle" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
