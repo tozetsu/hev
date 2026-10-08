@@ -1,0 +1,22 @@
+{
+  "model": "typesafe-ai/jev",
+  "answers": {
+    "refund": { "type": "noul", "noul": 0.98 }
+  },
+  "usage": { "input_tokens": 275, "output_tokens": 20 },
+  "provider_metadata": {
+    "gateway": {
+      "routing": {
+        "originalModelId": "typesafe-ai/jev",
+        "resolvedProvider": "typesafe-ai",
+        "canonicalSlug": "typesafe-ai/jev",
+        "finalProvider": "typesafe-ai"
+      },
+      "cost": "0.00001155",
+      "marketCost": "0.00001155",
+      "surchargeCost": "0",
+      "gatewayCost": "0.00001155",
+      "generationId": "gen_..."
+    }
+  }
+}

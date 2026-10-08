@@ -1,0 +1,4 @@
+{
+  "message": "questions.refund.type: expected one of 'noul', 'choice', 'score'",
+  "error_type": "invalid_request"
+}

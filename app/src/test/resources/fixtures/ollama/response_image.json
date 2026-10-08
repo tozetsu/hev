@@ -1,0 +1,13 @@
+{
+  "model": "clef-flash",
+  "answers": {
+    "has_ollama": {"type": "noul", "noul": 0.959},
+    "app": {
+      "type": "choice",
+      "choice": "vscode",
+      "probabilities": {"vscode": 0.966, "other": 0.017, "browser": 0.010, "terminal": 0.007},
+      "confidence": 0.868
+    }
+  },
+  "usage": {"input_tokens": 677, "output_tokens": 0}
+}

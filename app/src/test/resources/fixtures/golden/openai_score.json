@@ -1,0 +1,16 @@
+{
+  "model": "gpt-6-luna",
+  "input": "Help! My payouts have been failing for 3 days.",
+  "questions": [
+    {
+      "type": "score",
+      "name": "decision",
+      "instructions": "How frustrated is the customer?",
+      "levels": [
+        { "label": "Calm" },
+        { "label": "Frustrated" },
+        { "label": "Very angry" }
+      ]
+    }
+  ]
+}

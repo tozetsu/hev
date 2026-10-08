@@ -1,0 +1,10 @@
+{
+  "model": "jev-latest",
+  "state": "Does this convey urgency?",
+  "questions": {
+    "decision": {
+      "type": "noul",
+      "instructions": "Does this convey urgency?"
+    }
+  }
+}

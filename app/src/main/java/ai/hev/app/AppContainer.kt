@@ -5,19 +5,18 @@ import ai.hev.app.data.local.db.HevDatabase
 import ai.hev.app.data.local.prefs.LanguageStore
 import ai.hev.app.data.local.prefs.ProviderStore
 import ai.hev.app.data.local.prefs.ThemeStore
-import ai.hev.app.data.remote.JevApiClient
+import ai.hev.app.data.remote.DecisionClient
 import ai.hev.app.data.repository.HevRepository
 
 class AppContainer(context: Context) {
     private val db = HevDatabase.get(context)
     private val providerStore = ProviderStore(context)
-    private val api = JevApiClient()
 
     val themeStore = ThemeStore(context)
     val languageStore = LanguageStore(context)
 
     val repository = HevRepository(
-        api = api,
+        client = DecisionClient(),
         historyDao = db.historyDao(),
         providerStore = providerStore,
     )

@@ -1,0 +1,14 @@
+{
+  "model": "jev-latest",
+  "state": "Help! My payouts have been failing for 3 days.",
+  "questions": {
+    "decision": {
+      "type": "choice",
+      "instructions": "Which team should handle this?",
+      "criteria": {
+        "a": "Payments, invoicing, refunds",
+        "b": "Bugs, outages, integrations"
+      }
+    }
+  }
+}

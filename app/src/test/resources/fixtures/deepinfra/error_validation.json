@@ -1,0 +1,9 @@
+{
+  "detail": [
+    {
+      "loc": ["body", "questions", "decision", "criteria"],
+      "msg": "Dictionary should have at most 52 items after validation, not 60",
+      "type": "too_long"
+    }
+  ]
+}

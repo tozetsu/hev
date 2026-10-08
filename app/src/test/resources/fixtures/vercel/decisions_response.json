@@ -1,0 +1,40 @@
+{
+  "model": "openai/gpt-6-luna-decisions",
+  "answers": [
+    { "type": "predicate", "name": "damaged", "probability": 0.95 },
+    {
+      "type": "choice",
+      "name": "queue",
+      "choice": "shipping",
+      "confidence": 0.81,
+      "probabilities": [
+        { "value": "billing", "probability": 0.19 },
+        { "value": "shipping", "probability": 0.81 }
+      ]
+    },
+    {
+      "type": "score",
+      "name": "urgency",
+      "score": 1.3,
+      "confidence": 0.62,
+      "probabilities": [
+        { "value": 0, "label": "low", "probability": 0.08 },
+        { "value": 1, "label": "medium", "probability": 0.54 },
+        { "value": 2, "label": "high", "probability": 0.38 }
+      ]
+    }
+  ],
+  "usage": { "input_tokens": 96, "output_tokens": 0, "total_tokens": 96 },
+  "provider_metadata": {
+    "gateway": {
+      "routing": {
+        "originalModelId": "openai/gpt-6-luna-decisions",
+        "resolvedProvider": "openai",
+        "canonicalSlug": "openai/gpt-6-luna-decisions",
+        "finalProvider": "openai"
+      },
+      "cost": "0.0000096",
+      "generationId": "gen_..."
+    }
+  }
+}

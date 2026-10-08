@@ -1,0 +1,8 @@
+{
+  "error": {
+    "message": "Image input isn't supported on AI Gateway's Decisions API yet. Send text input.",
+    "type": "invalid_request_error",
+    "param": "input[0].content[1]",
+    "code": "invalid_request_error"
+  }
+}

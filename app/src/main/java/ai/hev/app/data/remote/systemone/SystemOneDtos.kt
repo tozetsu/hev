@@ -1,45 +1,43 @@
-package ai.hev.app.data.remote
+package ai.hev.app.data.remote.systemone
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 @Serializable
-data class SystemOneRequest(
+internal data class SystemOneRequest(
     val model: String,
     val state: String,
-    val questions: Map<String, QuestionDto>,
+    val questions: Map<String, SystemOneQuestion>,
 )
 
 @Serializable
-data class QuestionDto(
+internal data class SystemOneQuestion(
     val type: String,
     val instructions: String,
-    /** Choice: object map; score: string array; noul: omitted. */
+    /** Choice: option → description; score: ordered level array; noul: omitted. */
     val criteria: JsonElement? = null,
 )
 
 @Serializable
-data class SystemOneResponse(
-    val answers: Map<String, AnswerDto>? = null,
-    val usage: UsageDto? = null,
+internal data class SystemOneResponse(
     val model: String? = null,
+    val answers: Map<String, SystemOneAnswer> = emptyMap(),
+    val usage: SystemOneUsage? = null,
 )
 
 @Serializable
-data class AnswerDto(
+internal data class SystemOneAnswer(
     val type: String? = null,
     val choice: String? = null,
     val score: Double? = null,
     val noul: Double? = null,
     val probabilities: Map<String, Double>? = null,
     val confidence: Double? = null,
-    /** Score: level index → level text. */
-    val legend: Map<String, String>? = null,
 )
 
 @Serializable
-data class UsageDto(
+internal data class SystemOneUsage(
     @SerialName("input_tokens") val inputTokens: Int? = null,
     @SerialName("output_tokens") val outputTokens: Int? = null,
 )

@@ -1,0 +1,11 @@
+{
+  "model": "gpt-6-luna",
+  "input": "Does this convey urgency?",
+  "questions": [
+    {
+      "type": "predicate",
+      "name": "decision",
+      "instructions": "Does this convey urgency?"
+    }
+  ]
+}

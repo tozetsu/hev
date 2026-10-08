@@ -1,0 +1,30 @@
+{
+ "model": "decision-model-preview",
+ "request_id": "7b986c65-b223-9341-b5f0-b988e27ecaac",
+ "answers": {
+ "department": {
+ "type": "choice",
+ "choice": "billing",
+ "confidence": 0.88,
+ "probabilities": {"billing": 0.94, "technical": 0.06}
+ },
+ "escalate": {
+ "type": "noul",
+ "noul": 0.99
+ },
+ "severity": {
+ "type": "score",
+ "score": 2.25,
+ "confidence": 0.91,
+ "legend": {
+ "0": "Minor issue, no impact on functionality",
+ "1": "Some functionality affected, but a workaround exists",
+ "2": "Core functionality unavailable, no workaround",
+ "3": "Severe business or security impact"
+ },
+ "probabilities": {"0": 0.0, "1": 0.01, "2": 0.73, "3": 0.26}
+ }
+ },
+ "usage": {"input_tokens": 125},
+ "latency_ms": 52.9
+}

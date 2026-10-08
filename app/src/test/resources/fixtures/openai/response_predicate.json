@@ -1,0 +1,9 @@
+{
+  "answers": [
+    {
+      "type": "predicate",
+      "name": "visible_damage",
+      "probability": 0.92
+    }
+  ]
+}

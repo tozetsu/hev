@@ -3,11 +3,12 @@ package ai.hev.app.data.repository
 import ai.hev.app.data.local.db.HistoryDao
 import ai.hev.app.data.local.db.HistoryMapper
 import ai.hev.app.data.local.prefs.ProviderStore
-import ai.hev.app.data.remote.JevApiClient
+import ai.hev.app.data.remote.DecisionClient
 import ai.hev.app.domain.decision.ChoiceOption
 import ai.hev.app.domain.decision.DecisionRequest
 import ai.hev.app.domain.decision.Question
 import ai.hev.app.domain.history.HistoryEntry
+import ai.hev.app.domain.provider.DecisionProtocol
 import ai.hev.app.domain.provider.ProviderConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -15,7 +16,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 class HevRepository(
-    private val api: JevApiClient,
+    private val client: DecisionClient,
     private val historyDao: HistoryDao,
     private val providerStore: ProviderStore,
 ) {
@@ -32,8 +33,8 @@ class HevRepository(
     fun ensureDefaultProvider() = providerStore.createDefaultIfEmpty()
 
     /** Sends [request] to [provider], stores the answer, and returns the new history id. */
-    suspend fun decide(provider: ProviderConfig, request: DecisionRequest): Long = withContext(Dispatchers.IO) {
-        val result = api.decide(provider.baseUrl, provider.apiKey, request)
+    suspend fun decide(provider: ProviderConfig, request: DecisionRequest): Long {
+        val result = client.decide(DecisionProtocol.SystemOne, provider.baseUrl, provider.apiKey, request)
         val entry = HistoryEntry(
             createdAt = System.currentTimeMillis(),
             kind = request.kind,
@@ -45,7 +46,7 @@ class HevRepository(
             providerName = provider.name,
             rawJson = result.rawJson,
         )
-        historyDao.insert(HistoryMapper.toEntity(entry))
+        return historyDao.insert(HistoryMapper.toEntity(entry))
     }
 
     suspend fun getHistory(id: Long): HistoryEntry? =
