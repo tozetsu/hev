@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
@@ -31,15 +30,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         compose = true
     }
     sourceSets {
         // Robolectric reads assets from the merged debug variant; MigrationTestHelper needs the schemas there.
-        getByName("debug").assets.srcDir("$projectDir/schemas")
+        getByName("debug").assets.directories.add("$projectDir/schemas")
     }
     testOptions {
         unitTests.isIncludeAndroidResources = true
@@ -74,7 +70,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
 
     implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.androidx.security.crypto)
