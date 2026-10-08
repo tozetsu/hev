@@ -29,12 +29,14 @@ data class SystemOneResponse(
 
 @Serializable
 data class AnswerDto(
+    val type: String? = null,
     val choice: String? = null,
     val score: Double? = null,
     val noul: Double? = null,
     val probabilities: Map<String, Double>? = null,
     val confidence: Double? = null,
-    val answer: String? = null,
+    /** Score: level index → level text. */
+    val legend: Map<String, String>? = null,
 )
 
 @Serializable
@@ -44,9 +46,8 @@ data class ResponseMeta(
 
 @Serializable
 data class UsageDto(
-    @SerialName("prompt_tokens") val promptTokens: Int? = null,
-    @SerialName("completion_tokens") val completionTokens: Int? = null,
-    @SerialName("total_tokens") val totalTokens: Int? = null,
+    @SerialName("input_tokens") val inputTokens: Int? = null,
+    @SerialName("output_tokens") val outputTokens: Int? = null,
 )
 
 @Serializable

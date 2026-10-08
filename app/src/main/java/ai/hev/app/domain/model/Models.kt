@@ -52,9 +52,8 @@ data class DecideResult(
     val probabilities: Map<String, Double> = emptyMap(),
     val confidence: Double? = null,
     val model: String? = null,
-    val usagePromptTokens: Int? = null,
-    val usageCompletionTokens: Int? = null,
-    val usageTotalTokens: Int? = null,
+    val inputTokens: Int? = null,
+    val outputTokens: Int? = null,
     val rawJson: String = "",
 )
 

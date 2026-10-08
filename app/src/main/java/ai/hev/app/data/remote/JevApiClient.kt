@@ -138,15 +138,14 @@ class JevApiClient(
         val model = parsed.response?.model ?: parsed.model
         return DecideResult(
             questionType = type,
-            choice = answer?.choice ?: answer?.answer,
+            choice = answer?.choice,
             score = answer?.score,
             noul = answer?.noul,
             probabilities = answer?.probabilities.orEmpty(),
             confidence = answer?.confidence,
             model = model,
-            usagePromptTokens = parsed.usage?.promptTokens,
-            usageCompletionTokens = parsed.usage?.completionTokens,
-            usageTotalTokens = parsed.usage?.totalTokens,
+            inputTokens = parsed.usage?.inputTokens,
+            outputTokens = parsed.usage?.outputTokens,
             rawJson = raw,
         )
     }
