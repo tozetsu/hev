@@ -1,8 +1,6 @@
 # AGENTS.md
 
-Instructions for coding agents working on **HEV** (Android client for TypeSafe Jev System One).
-
-Choice, score, and noul are all shipped on `main` as equal first-class types.
+Instructions for coding agents working on **HEV**, an Android client for decision models (TypeSafe System One and OpenAI Decisions protocols).
 
 ## Build and test
 
@@ -10,99 +8,81 @@ Requires JDK 17 and Android SDK (`sdk.dir` in `local.properties`; see `local.pro
 
 ```bash
 export JAVA_HOME=/path/to/jdk-17
-./gradlew assembleDebug
+./gradlew testDebugUnitTest assembleDebug
 ```
 
-Use `assembleDebug` for local checks. App version stays **1.0.0** unless the human asks for a release bump.
+Both must pass before every commit. App version stays **1.0.0** unless the human asks for a release bump.
 
 ## Project layout
 
-- Kotlin, Jetpack Compose, Material 3
-- Package: `ai.hev.app`
-- Layers: `domain` / `data` / `ui`
-- App code under `app/src/main/java/ai/hev/app/`
+- Kotlin, Jetpack Compose, Material 3; package `ai.hev.app`
+- `domain/`: plain Kotlin, no Android or wire types
+  - `decision/`: `DecisionKind` (Choice, Score, YesNo), `Question`, `DecisionRequest`, `DecisionOutcome`, `DecisionError`, `ModelCapabilities`, `DecisionDraft`
+  - `provider/`: `DecisionProtocol`, `ProviderConfig`, `ProviderPreset`, `ProviderPresets`, `Endpoints`
+  - `history/`: `HistoryEntry`
+- `data/remote/`: `DecisionClient`, one codec per protocol, `ModelCatalog`, `http/` (transport, retry, error bodies)
+- `data/local/`: Room (`db/`), encrypted provider storage (`prefs/`), `StorageKeys`
+- `ui/`: screens and ViewModels; thin ViewModels over pure state classes
+- Tests in `app/src/test/`; fixtures in `app/src/test/resources/fixtures/<vendor>/`
 
 ## Languages
 
-- Code, comments, this file, and README: English
-- UI string resources: English in `values/` only (no Chinese locale)
-- Conversation with the human may be Chinese; that does not change in-repo language rules
+- Code, comments, commit messages, this file, and README: English
+- English is the only locale: strings live in `values/` only; do not add translations or a language setting
+- The human may converse in another language; that does not change in-repo rules
 
 ## Product UI tone
 
-How the **app** should read to end users (string resources and on-screen labels):
-
 - Modern and clean
-- Copy only serves the current action
-- Short labels; meaning comes from layout and controls, not paragraphs
+- Copy only serves the current action: labels, field names, short errors
+- No help text, explainers, or onboarding copy anywhere in the app
+- Range errors use placeholders (`Need %1$d–%2$d options`), never hard-coded limits
 
-## Jev API
+## Decisions providers
 
-- Store the provider Endpoint URL exactly as entered (no path stitching)
-- Empty `state` falls back to the question text
-- Show HTTP errors using the server response body when present
-- API keys in encrypted prefs; history in Room until the user deletes it
-- Default base: `https://api.typesafe.ai` — `POST /v1/systemone`
+- A provider is a `ProviderConfig`: protocol, endpoint, API key, model, optional preset and models URL
+- Presets in `ProviderPresets` only prefill the form; the saved provider owns its fields
+- The protocol selector and models endpoint field are shown only for Custom
+- Store the endpoint exactly as entered; never stitch path segments onto it
+- A models URL may be absolute or relative to the endpoint (resolved like a link)
+- Model lists accept `{"models": [{"name"}]}` and `{"data": [{"id"}]}`; any failure falls back to manual entry without a message
+- API keys stay in encrypted prefs; send `Authorization: Bearer` only when a key is set
 
-## Question types
+### Adapter and protocol rules
 
-Shared decide path; types differ in `type`, `criteria`, and result fields.
+- The domain never sees wire names. Each `DecisionCodec` owns the full mapping for its protocol:
+  - System One: `noul` / `choice` / `score`, `state`, `criteria` (map for choice, ordered array for score), answers keyed by question name
+  - OpenAI Decisions: `predicate` / `choice` / `score`, `input`, `choices[{value, description}]`, `levels[{label}]`, answers array, `refusal`
+- Codecs are pure; `DecisionClient` picks one with an exhaustive `when` over `DecisionProtocol`
+- `HttpTransport` handles auth, status mapping to `DecisionError`, error body extraction, and one retry for 429 / 503 / 529 honouring `Retry-After` (capped at 10 s)
+- New error body shapes go into `ErrorBody` with a test
+- A new protocol means a new `DecisionProtocol` entry, a codec, golden request tests, and decode tests
 
-### Choice
+### Capability-driven UI
 
-- API `type`: `choice`
-- `criteria`: map of option id → label
-- UI: 2–255 options (ids `a`, `b`, … Excel-style); import from structured text replaces the list
-- Result: confidence chip + probability bars labeled `a` / `b` / `c` …; model · provider under results
+- `ModelCapabilities` decides which kinds the home screen offers, item count limits, import caps, and validation
+- Presets carry documented vendor limits only; unknown vendors and custom providers use `ModelCapabilities.Lenient`
+- The server is the final authority; show its error rather than guessing
+- No UI for editing limits
 
-### Score
+### Adding a vendor
 
-- API `type`: `score`
-- `criteria`: ordered JSON array of 2–10 level description strings (low → high)
-- Returns `score` (may be fractional), `probabilities`, `confidence`
-- Home: levels list (same row UI as options; labels are level texts; min 2, max 10)
-- Result: numeric score prominent + confidence + optional per-level probability bars (probability keys are often `"0"`, `"1"`, … — map to level text by index)
-
-### Noul
-
-- API `type`: `noul`
-- Request uses `instructions` (and `state`) only; no `criteria`
-- Returns `noul` 0–1 (yes probability)
-- Home: no options / levels section
-- Result: probability as the primary readout; do not invent a choice-style winner; skip the confidence chip when the API omits confidence
-
-## Home UX
-
-- Type control: Choice / Score / Noul (segmented control)
-- Switching type keeps question and state; resets lists to:
-  - choice: `a` + `b` empty
-  - score: two empty levels
-  - noul: none
+- Add a `ProviderPreset` with its endpoint, models, optional models URL, and documented limits
+- Ship fixtures copied from the vendor's official docs under `fixtures/<vendor>/`, and say so in the test when a body is shaped from a schema instead
+- Add decode, error body, and vendor matrix cases for every fixture
 
 ## History
 
-- Fields: `questionType` (`choice` | `score` | `noul`), `score`, `noul`
-- Room schema v2
-- Row subtitle: choice shows winner-style text; score shows the score; noul shows formatted probability
-- Missing `questionType` on old rows means choice
-
-## API DTOs
-
-- Choice: map criteria; score: list criteria; noul: omit criteria
-- Criteria as `JsonObject` / `JsonElement`, or built per type in `JevApiClient`
-- `AnswerDto` has optional `score` and `noul`
-
-## Domain
-
-- Shared `DecideResult` (and related types) plus `HistoryEntry` covering all three question types
-- Thin ViewModels; decide entry points stay typed (`runChoice` / `runScore` / `runNoul`) or a single `runDecide` — avoid unstructured branching
+- Room database with exported schemas in `app/schemas/`; bump the version only with an explicit `Migration` in `HevMigrations` and a `MigrationTestHelper` test
+- Never use destructive migrations; history stays until the user deletes it
+- Stored keys come from `StorageKeys`; never rename an existing key
+- Entries record provider id, protocol, refusal, and input tokens
 
 ## Agent rules
 
-Rules for **you** when editing this repo (not end-user UI copy):
-
-- Do not add help walls, feature essays, or conceptual explainers into the app UI (including “what is confidence”)
-- Do not stitch path segments onto a full Endpoint URL the user already set
+- Do not add help walls, feature essays, or conceptual explainers to the app UI
+- Do not stitch path segments onto a full endpoint URL the user already set
 - Do not bump `versionCode` / `versionName` without an explicit ask
-- Do not commit secrets; keys stay in encrypted prefs / local-only config
-- Do not write docs or code that treat score or noul as unfinished relative to choice
+- Do not commit secrets; keys stay in encrypted prefs or local-only config
+- Do not add destructive migrations or `fallbackToDestructiveMigration`
+- Keep one shared decide path; no per-kind or per-vendor run functions
