@@ -30,7 +30,6 @@ class HevRepository(
     fun upsertProvider(config: ProviderConfig) = providerStore.upsert(config)
     fun deleteProvider(id: String) = providerStore.delete(id)
     fun setActiveProvider(id: String) = providerStore.setActive(id)
-    fun ensureDefaultProvider() = providerStore.createDefaultIfEmpty()
 
     /** Sends [request] to [provider], stores the answer, and returns the new history id. */
     suspend fun decide(provider: ProviderConfig, request: DecisionRequest): Long {
@@ -52,9 +51,8 @@ class HevRepository(
         return historyDao.insert(HistoryMapper.toEntity(entry))
     }
 
-    /** Models offered at [modelsUrl]; throws [ai.hev.app.domain.decision.DecisionError] on failure. */
-    suspend fun listModels(modelsUrl: String, endpoint: String, apiKey: String): List<String> =
-        modelCatalog.fetch(modelsUrl, endpoint, apiKey)
+    /** Models the vendor behind [endpoint] lists; empty when it lists none. */
+    suspend fun listModels(endpoint: String, apiKey: String): List<String> = modelCatalog.fetch(endpoint, apiKey)
 
     suspend fun getHistory(id: Long): HistoryEntry? = historyDao.getById(id)?.let(HistoryMapper::toDomain)
 

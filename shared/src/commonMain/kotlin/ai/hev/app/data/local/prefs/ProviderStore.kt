@@ -1,11 +1,9 @@
 package ai.hev.app.data.local.prefs
 
 import ai.hev.app.domain.provider.ProviderConfig
-import ai.hev.app.domain.provider.ProviderPresets
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlin.uuid.Uuid
 
 /** The configured providers as observable state, written through to [storage]. */
 class ProviderStore(private val storage: ProviderStorage) {
@@ -40,13 +38,6 @@ class ProviderStore(private val storage: ProviderStorage) {
     fun setActive(id: String?) {
         storage.saveActiveId(id)
         _activeId.value = id
-    }
-
-    fun createDefaultIfEmpty() {
-        if (_providers.value.isNotEmpty()) return
-        val def = ProviderPresets.TypeSafe.newProvider(Uuid.random().toString())
-        upsert(def)
-        setActive(def.id)
     }
 
     private fun persist(list: List<ProviderConfig>) {

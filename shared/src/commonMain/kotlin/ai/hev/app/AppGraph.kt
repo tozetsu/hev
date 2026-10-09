@@ -29,8 +29,4 @@ class AppGraph internal constructor(
         historyDao = database.historyDao(),
         providerStore = ProviderStore(providerStorage),
     )
-
-    init {
-        repository.ensureDefaultProvider()
-    }
 }

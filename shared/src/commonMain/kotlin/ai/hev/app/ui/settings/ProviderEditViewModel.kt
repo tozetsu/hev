@@ -2,11 +2,8 @@ package ai.hev.app.ui.settings
 
 import ai.hev.app.data.local.prefs.SecretStorageException
 import ai.hev.app.data.repository.HevRepository
-import ai.hev.app.domain.decision.DecisionError
 import ai.hev.app.domain.provider.DecisionProtocol
 import ai.hev.app.domain.provider.ProviderIssue
-import ai.hev.app.domain.provider.ProviderPreset
-import ai.hev.app.domain.provider.ProviderPresets
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlin.uuid.Uuid
@@ -24,41 +21,30 @@ class ProviderEditViewModel(
     private val existing = providerId?.let { id -> repo.providers.value.firstOrNull { it.id == id } }
 
     private val _state = MutableStateFlow(
-        ProviderEditState.of(
-            config = existing ?: ProviderPresets.TypeSafe.newProvider(Uuid.random().toString()),
-            isNew = existing == null,
-        ),
+        existing?.let(ProviderEditState::of) ?: ProviderEditState(id = Uuid.random().toString(), isNew = true),
     )
     val state: StateFlow<ProviderEditState> = _state.asStateFlow()
 
-    fun selectPreset(preset: ProviderPreset?) = edit { it.withPreset(preset) }
-
     fun setName(value: String) = edit { it.copy(name = value) }
     fun setProtocol(value: DecisionProtocol) = edit { it.copy(protocol = value) }
-    fun setEndpoint(value: String) = edit { it.copy(endpoint = value) }
-    fun setModelsUrl(value: String) = edit { it.copy(modelsUrl = value) }
+    fun setEndpoint(value: String) = edit { it.copy(endpoint = value, fetchedModels = emptyList()) }
     fun setApiKey(value: String) = edit { it.copy(apiKey = value) }
     fun setModel(value: String) = edit { it.copy(model = value) }
 
-    private var modelsRequest: List<String>? = null
+    private var modelsRequest: Pair<String, String>? = null
     private var modelsJob: Job? = null
 
-    /** Loads the vendor's model list once per URL and key; failures leave manual entry. */
+    /** Loads the vendor's model list once per endpoint and key; without one, the model is typed in. */
     fun loadModels() {
         val current = _state.value
-        if (current.modelsUrl.isBlank()) return
-        val request = listOf(current.modelsUrl.trim(), current.endpoint.trim(), current.apiKey.trim())
+        val request = current.endpoint.trim() to current.apiKey.trim()
         if (request == modelsRequest) return
         modelsRequest = request
         modelsJob?.cancel()
         modelsJob = viewModelScope.launch {
-            val (modelsUrl, endpoint, apiKey) = request
-            try {
-                val models = repo.listModels(modelsUrl, endpoint, apiKey)
-                _state.update { it.copy(fetchedModels = models) }
-            } catch (_: DecisionError) {
-                modelsRequest = null
-            }
+            val models = repo.listModels(request.first, request.second)
+            _state.update { it.copy(fetchedModels = models) }
+            if (models.isEmpty()) modelsRequest = null
         }
     }
 

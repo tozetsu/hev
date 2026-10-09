@@ -1,7 +1,8 @@
 package ai.hev.app.data.local.prefs
 
 import ai.hev.app.data.local.secrets.FileSecretStore
-import ai.hev.app.domain.provider.ProviderPresets
+import ai.hev.app.domain.provider.DecisionProtocol
+import ai.hev.app.domain.provider.ProviderConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Rule
@@ -20,7 +21,7 @@ class FileStorageTest {
 
     @Test
     fun `providers round-trip with keys kept only in the private secrets file`() {
-        val provider = ProviderPresets.TypeSafe.newProvider("p1").copy(apiKey = "sk-secret")
+        val provider = ProviderConfig("p1", "TypeSafe", DecisionProtocol.SystemOne, "https://api.typesafe.ai/v1/systemone", "sk-secret", "jev-latest")
         val storage = FileProviderStorage(config.resolve("providers.json"), FileSecretStore(data.resolve("secrets.json")))
         storage.saveProviders(listOf(provider))
         storage.saveActiveId("p1")

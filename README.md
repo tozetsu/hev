@@ -16,23 +16,7 @@ Stack: Kotlin Multiplatform, Compose Multiplatform, Material 3. Package `ai.hev.
 
 ## Providers
 
-Pick a preset or add a custom endpoint under Settings → Providers. Presets only prefill the form; every field stays editable.
-
-| Preset | Protocol | Endpoint |
-| --- | --- | --- |
-| TypeSafe | System One | `https://api.typesafe.ai/v1/systemone` |
-| Perplexity | System One | `https://api.perplexity.ai/v1/decisions` |
-| Alibaba Beijing | System One | `https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/systemone` |
-| Alibaba Singapore | System One | `https://{WorkspaceId}.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1/systemone` |
-| OpenRouter | System One | `https://openrouter.ai/api/v1/systemone` |
-| Vercel System One | System One | `https://ai-gateway.vercel.sh/typesafe/v1/systemone` |
-| DeepInfra | System One | `https://api.deepinfra.com/v1/decisions` |
-| Liquid | System One | `https://api.liquid.ai/decisions/v1/systemone` |
-| Ollama | System One | `http://localhost:11434/v1/systemone` |
-| OpenAI | OpenAI Decisions | `https://api.openai.com/v1/decisions` |
-| Vercel Decisions | OpenAI Decisions | `https://ai-gateway.vercel.sh/v1/decisions` |
-
-For Alibaba, replace `{WorkspaceId}` with your workspace ID. Ollama needs no API key. Where the vendor offers a model list, the model field loads it.
+HEV speaks two protocols: TypeSafe System One and OpenAI Decisions. A provider is a protocol, an endpoint, an API key if the vendor needs one, and a model.
 
 ## Desktop
 
@@ -70,4 +54,4 @@ History is stored with Room and kept across upgrades. Requests go only to the en
 
 ## Disclaimer
 
-Unofficial client, not affiliated with any of the vendors listed. You supply your own endpoint and API key and are responsible for usage, costs, and each provider's terms. Provided as-is, without warranty. Model output is yours to interpret and act on.
+Unofficial client, not affiliated with any vendor. You supply your own endpoint and API key and are responsible for usage, costs, and each provider's terms. Provided as-is, without warranty. Model output is yours to interpret and act on.

@@ -1,11 +1,28 @@
 package ai.hev.app.domain.provider
 
+import ai.hev.app.testing.Vendors
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class EndpointsTest {
+
+    @Test
+    fun `documented endpoints are valid`() {
+        Vendors.all.forEach { assertTrue(it.id, Endpoints.isValid(it.endpoint)) }
+    }
+
+    @Test
+    fun `endpoint validation`() {
+        assertTrue(Endpoints.isValid(" http://192.168.1.5:11434/v1/systemone "))
+        assertFalse(Endpoints.isValid(""))
+        assertFalse(Endpoints.isValid("api.typesafe.ai/v1/systemone"))
+        assertFalse(Endpoints.isValid("ftp://host/x"))
+        assertFalse(Endpoints.isValid("https:///v1"))
+        assertFalse(Endpoints.isValid("https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com/v1/systemone"))
+    }
 
     @Test
     fun `rejects characters outside rfc 3986`() {
@@ -41,5 +58,15 @@ class EndpointsTest {
     fun `unusable bases and non-http targets resolve to nothing`() {
         assertNull(Endpoints.resolve("not a url", "/api/tags"))
         assertNull(Endpoints.resolve("https://a.example/v1", "ftp://b.example/models"))
+    }
+
+    @Test
+    fun `authority is the lowercased host and explicit port`() {
+        assertEquals(Endpoints.Authority("api.typesafe.ai", null), Endpoints.authority(" https://API.TypeSafe.ai/v1/systemone "))
+        assertEquals(Endpoints.Authority("localhost", 11434), Endpoints.authority("http://u:p@localhost:11434/v1"))
+        assertEquals(Endpoints.Authority("[::1]", 8080), Endpoints.authority("http://[::1]:8080"))
+        assertEquals(Endpoints.Authority("[::1]", null), Endpoints.authority("http://[::1]/v1"))
+        assertEquals(Endpoints.Authority("example.com", null), Endpoints.authority("https://example.com.:/v1"))
+        assertNull(Endpoints.authority("not a url"))
     }
 }

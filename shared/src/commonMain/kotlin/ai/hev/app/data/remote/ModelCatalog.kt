@@ -9,22 +9,28 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 
-/** Lists the model ids a vendor's models endpoint offers. */
+/** Lists the model ids the vendor behind a decisions endpoint offers. */
 class ModelCatalog(private val transport: HttpTransport = HttpTransport()) {
 
-    /** Model ids in server order; empty when no URL can be formed. */
-    suspend fun fetch(modelsUrl: String, endpoint: String, apiKey: String): List<String> {
-        val url = resolve(modelsUrl, endpoint) ?: return emptyList()
-        return parse(transport.get(url, apiKey))
+    /** Model ids in server order from the first of [locations] that answers; empty when none does. */
+    suspend fun fetch(endpoint: String, apiKey: String): List<String> {
+        for (url in locations(endpoint)) {
+            try {
+                return parse(transport.get(url, apiKey))
+            } catch (_: DecisionError) {
+                // Try the next convention.
+            }
+        }
+        return emptyList()
     }
 
     companion object {
         /**
-         * An absolute [modelsUrl] is used as is; a relative one (e.g. `/api/tags`) is resolved
-         * against [endpoint] the way a browser resolves a link.
+         * Where vendors list models, resolved against [endpoint] like links: next to it
+         * (`…/v1/systemone` → `…/v1/models`), then Ollama's `/api/tags`.
          */
-        fun resolve(modelsUrl: String, endpoint: String): String? =
-            modelsUrl.trim().ifEmpty { null }?.let { Endpoints.resolve(endpoint, it) }
+        fun locations(endpoint: String): List<String> =
+            listOf("models", "/api/tags").mapNotNull { Endpoints.resolve(endpoint, it) }
 
         /**
          * Reads `{"models": [...]}` (TypeSafe, Ollama) or `{"data": [...]}` (OpenAI style, OpenRouter).

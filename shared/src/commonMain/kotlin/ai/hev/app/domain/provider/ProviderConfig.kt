@@ -2,10 +2,7 @@ package ai.hev.app.domain.provider
 
 import ai.hev.app.domain.decision.ModelCapabilities
 
-/**
- * A configured decisions endpoint. [endpoint] and [modelsUrl] are used exactly as entered;
- * [presetId] is null for a custom provider.
- */
+/** A configured decisions endpoint, used exactly as entered. */
 data class ProviderConfig(
     val id: String,
     val name: String,
@@ -13,13 +10,7 @@ data class ProviderConfig(
     val endpoint: String,
     val apiKey: String,
     val model: String,
-    val presetId: String? = null,
-    val modelsUrl: String? = null,
 ) {
-    val preset: ProviderPreset? get() = ProviderPresets.byId(presetId)
-
-    val requiresApiKey: Boolean get() = preset?.apiKeyRequired ?: false
-
-    /** Known limits for this vendor; lenient for custom providers. */
-    val capabilities: ModelCapabilities get() = preset?.capabilities ?: ModelCapabilities.Lenient
+    /** Documented limits of the vendor behind [endpoint]; lenient when there are none. */
+    val capabilities: ModelCapabilities get() = VendorLimits.of(endpoint)
 }

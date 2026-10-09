@@ -1,79 +1,54 @@
 package ai.hev.app.ui.settings
 
 import ai.hev.app.domain.provider.DecisionProtocol
+import ai.hev.app.domain.provider.ProviderConfig
 import ai.hev.app.domain.provider.ProviderIssue
-import ai.hev.app.domain.provider.ProviderPresets
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ProviderEditStateTest {
-    private val typesafe = ProviderEditState.of(ProviderPresets.TypeSafe.newProvider("id"), isNew = true)
+    private val blank = ProviderEditState(id = "id", isNew = true)
+    private val filled = blank.copy(name = "Mine", endpoint = "https://x.example/v1/systemone", model = "m")
 
     @Test
-    fun `preset prefills every field and follows the name`() {
-        val openAi = typesafe.copy(apiKey = "sk").withPreset(ProviderPresets.OpenAi)
-
-        assertEquals("OpenAI", openAi.name)
-        assertEquals(DecisionProtocol.OpenAiDecisions, openAi.protocol)
-        assertEquals("https://api.openai.com/v1/decisions", openAi.endpoint)
-        assertEquals("gpt-6-luna", openAi.model)
-        assertEquals("", openAi.modelsUrl)
-        assertEquals("sk", openAi.apiKey)
-    }
-
-    @Test
-    fun `a custom name survives switching presets`() {
-        val state = typesafe.copy(name = "Work").withPreset(ProviderPresets.Ollama)
-        assertEquals("Work", state.name)
-    }
-
-    @Test
-    fun `custom keeps the values to edit`() {
-        val custom = typesafe.withPreset(ProviderPresets.OpenRouter).withPreset(null)
-
-        assertEquals(true, custom.isCustom)
-        assertEquals(ProviderPresets.OpenRouter.endpoint, custom.endpoint)
-        assertEquals(ProviderPresets.OpenRouter.modelsUrl, custom.modelsUrl)
-        assertNull(custom.toConfig().presetId)
+    fun `a new provider starts empty on system one`() {
+        assertEquals(DecisionProtocol.SystemOne, blank.protocol)
+        assertEquals(listOf("", "", "", ""), listOf(blank.name, blank.endpoint, blank.apiKey, blank.model))
     }
 
     @Test
     fun `validation order`() {
-        assertEquals(ProviderIssue.MissingName, typesafe.copy(name = " ").validate())
-        assertEquals(ProviderIssue.InvalidEndpoint, typesafe.withPreset(ProviderPresets.AlibabaBeijing).validate())
-        assertEquals(ProviderIssue.MissingApiKey, typesafe.validate())
-        assertEquals(ProviderIssue.MissingModel, typesafe.copy(apiKey = "k", model = "").validate())
-        assertNull(typesafe.copy(apiKey = "k").validate())
+        assertEquals(ProviderIssue.MissingName, blank.validate())
+        assertEquals(ProviderIssue.InvalidEndpoint, filled.copy(endpoint = "https://{WorkspaceId}.example/v1").validate())
+        assertEquals(ProviderIssue.MissingModel, filled.copy(model = " ").validate())
+        assertNull(filled.validate())
     }
 
     @Test
-    fun `key is optional for ollama and custom providers`() {
-        assertNull(typesafe.withPreset(ProviderPresets.Ollama).validate())
-        assertNull(typesafe.withPreset(null).validate())
+    fun `the key is optional`() {
+        assertNull(filled.copy(apiKey = "").validate())
     }
 
     @Test
-    fun `saved config is trimmed and drops an empty models url`() {
-        val config = typesafe.withPreset(null).copy(
+    fun `saved config is trimmed`() {
+        val config = filled.copy(
             name = " Mine ",
-            endpoint = " https://x.example/v1/systemone ",
+            protocol = DecisionProtocol.OpenAiDecisions,
+            endpoint = " https://x.example/v1/decisions ",
             apiKey = " k ",
-            modelsUrl = " ",
+            model = " m ",
         ).toConfig()
 
-        assertEquals("Mine", config.name)
-        assertEquals("https://x.example/v1/systemone", config.endpoint)
-        assertEquals("k", config.apiKey)
-        assertNull(config.modelsUrl)
+        assertEquals(ProviderConfig("id", "Mine", DecisionProtocol.OpenAiDecisions, "https://x.example/v1/decisions", "k", "m"), config)
     }
 
     @Test
-    fun `model options put fetched models first and keep suggestions`() {
-        val state = typesafe.copy(fetchedModels = listOf("jev-1.13.0", "jev-latest"))
+    fun `editing starts from the saved provider`() {
+        val config = ProviderConfig("p", "OpenAI", DecisionProtocol.OpenAiDecisions, "https://api.openai.com/v1/decisions", "sk", "gpt-6-luna")
+        val state = ProviderEditState.of(config)
 
-        assertEquals(listOf("jev-1.13.0", "jev-latest", "jev-preview"), state.modelOptions)
-        assertEquals(ProviderPresets.Ollama.models, state.withPreset(ProviderPresets.Ollama).modelOptions)
-        assertEquals(emptyList<String>(), state.withPreset(null).copy(fetchedModels = emptyList()).modelOptions)
+        assertEquals(false, state.isNew)
+        assertEquals(config, state.toConfig())
     }
 }

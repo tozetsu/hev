@@ -17,6 +17,18 @@ object Endpoints {
     /** An absolute http(s) URL with a host. */
     fun isValid(url: String): Boolean = HttpUrl.matches(url.trim())
 
+    /** Host and port of a valid [url], or null. */
+    data class Authority(val host: String, val port: Int?)
+
+    /** The lowercased host and explicit port of [url], or null when it is not valid. */
+    fun authority(url: String): Authority? {
+        if (!isValid(url)) return null
+        val hostPort = parse(url.trim()).authority!!.substringAfterLast('@').lowercase()
+        val colon = hostPort.lastIndexOf(':').takeIf { it > hostPort.lastIndexOf(']') }
+        val host = if (colon == null) hostPort else hostPort.substring(0, colon)
+        return Authority(host.trimEnd('.'), colon?.let { hostPort.substring(it + 1).toIntOrNull() })
+    }
+
     /**
      * [reference] resolved against [base] the way a browser resolves a link (RFC 3986 §5.2),
      * or null when either side is unusable. An absolute [reference] is returned as is.

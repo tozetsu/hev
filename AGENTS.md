@@ -20,7 +20,7 @@ All three must pass before every commit; also run `:desktop:packageAppImage` whe
 - `shared` source sets: `commonMain` for all logic and UI, `androidMain` and `jvmMain` (desktop) only for platform storage and the `expect`/`actual` pieces
 - `domain/`: plain Kotlin, no Android or wire types
   - `decision/`: `DecisionKind` (Choice, Score, YesNo), `Question`, `DecisionRequest`, `DecisionOutcome`, `DecisionError`, `ModelCapabilities`, `DecisionDraft`
-  - `provider/`: `DecisionProtocol`, `ProviderConfig`, `ProviderPreset`, `ProviderPresets`, `Endpoints`
+  - `provider/`: `DecisionProtocol`, `ProviderConfig`, `VendorLimits`, `Endpoints`
   - `history/`: `HistoryEntry`
 - `data/remote/`: `DecisionClient`, one codec per protocol, `ModelCatalog`, `http/` (transport, retry, error bodies)
 - `data/local/`: Room (`db/`), provider and theme storage (`prefs/`; encrypted prefs on Android, JSON files on desktop), `StorageKeys`, desktop `secrets/` (Secret Service keyring, else a 0600 file)
@@ -44,12 +44,11 @@ All three must pass before every commit; also run `:desktop:packageAppImage` whe
 
 ## Decisions providers
 
-- A provider is a `ProviderConfig`: protocol, endpoint, API key, model, optional preset and models URL
-- Presets in `ProviderPresets` only prefill the form; the saved provider owns its fields
-- The protocol selector and models endpoint field are shown only for Custom
+- A provider is a `ProviderConfig`: name, protocol, endpoint, API key, model; the user fills them in
+- No presets or vendor lists in the UI or README; the edit form is name, protocol, endpoint, API key, model
 - Store the endpoint exactly as entered; never stitch path segments onto it
-- A models URL may be absolute or relative to the endpoint (resolved like a link)
-- Model lists accept `{"models": [{"name"}]}` and `{"data": [{"id"}]}`; any failure falls back to manual entry without a message
+- Model lists are looked up next to the endpoint (`…/v1/models`), then at `/api/tags`, each resolved like a link; they accept `{"models": [{"name"}]}` and `{"data": [{"id"}]}`; no list falls back to manual entry without a message
+- Stored providers from older versions may carry `presetId` or `modelsUrl`; `ProviderCodec` ignores unknown keys, so keep it tolerant
 - API keys stay in encrypted prefs on Android and in the keyring or the 0600 secrets file on desktop; send `Authorization: Bearer` only when a key is set
 - A keyring the user will not unlock is an error, never a silent fallback to the file
 
@@ -66,13 +65,15 @@ All three must pass before every commit; also run `:desktop:packageAppImage` whe
 ### Capability-driven UI
 
 - `ModelCapabilities` decides which kinds the home screen offers, item count limits, import caps, and validation
-- Presets carry documented vendor limits only; unknown vendors and custom providers use `ModelCapabilities.Lenient`
+- `VendorLimits` maps an endpoint's host (or Ollama's port) to the limits that vendor documents; every other endpoint uses `ModelCapabilities.Lenient`
+- Limits that are documented per vendor stay keyed by host; key by model only if a vendor documents per-model limits
 - The server is the final authority; show its error rather than guessing
 - No UI for editing limits
 
 ### Adding a vendor
 
-- Add a `ProviderPreset` with its endpoint, models, optional models URL, and documented limits
+- Add its documented limits to `VendorLimits` (if it has any) with a test in `CapabilitiesTest`
+- Add it to `testing/Vendors` with its protocol, documented endpoint, and a model
 - Ship fixtures copied from the vendor's official docs under `fixtures/<vendor>/`, and say so in the test when a body is shaped from a schema instead
 - Add decode, error body, and vendor matrix cases for every fixture
 

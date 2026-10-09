@@ -67,9 +67,6 @@
     <string name="label_name">Name</string>
     <string name="label_endpoint">Endpoint</string>
     <string name="label_api_key">API key</string>
-    <string name="label_api_key_optional">API key (optional)</string>
-    <string name="label_models_url">Models endpoint</string>
-    <string name="preset_custom">Custom</string>
     <string name="protocol_system_one">System One</string>
     <string name="protocol_openai_decisions">OpenAI Decisions</string>
     <string name="label_model">Model</string>
@@ -101,7 +98,6 @@
 
     <!-- Errors -->
     <string name="error_configure_provider">Configure a provider first</string>
-    <string name="error_api_key">Enter an API key</string>
     <string name="error_endpoint_invalid">Enter a valid endpoint</string>
     <string name="error_question">Enter a question</string>
     <string name="error_options_empty">Options cannot be empty</string>

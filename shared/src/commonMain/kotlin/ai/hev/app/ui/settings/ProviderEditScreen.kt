@@ -1,8 +1,6 @@
 package ai.hev.app.ui.settings
 
 import ai.hev.app.domain.provider.DecisionProtocol
-import ai.hev.app.domain.provider.ProviderPreset
-import ai.hev.app.domain.provider.ProviderPresets
 import ai.hev.app.resources.Res
 import ai.hev.app.resources.action_cancel
 import ai.hev.app.resources.action_delete
@@ -13,12 +11,9 @@ import ai.hev.app.resources.cd_delete
 import ai.hev.app.resources.delete_provider_message
 import ai.hev.app.resources.delete_provider_title
 import ai.hev.app.resources.label_api_key
-import ai.hev.app.resources.label_api_key_optional
 import ai.hev.app.resources.label_endpoint
 import ai.hev.app.resources.label_model
-import ai.hev.app.resources.label_models_url
 import ai.hev.app.resources.label_name
-import ai.hev.app.resources.preset_custom
 import ai.hev.app.resources.protocol_openai_decisions
 import ai.hev.app.resources.protocol_system_one
 import ai.hev.app.resources.provider_edit
@@ -38,8 +33,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
@@ -49,7 +42,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -114,39 +106,25 @@ fun ProviderEditScreen(
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             item {
-                PresetChips(selected = state.preset, onSelect = vm::selectPreset)
-            }
-            if (state.isCustom) {
-                item {
-                    ProtocolSelector(
-                        selected = state.protocol,
-                        onSelect = vm::setProtocol,
-                        modifier = Modifier.padding(horizontal = 20.dp),
-                    )
-                }
+                Field(state.name, vm::setName, Res.string.label_name)
             }
             item {
-                Field(state.name, vm::setName, Res.string.label_name)
+                ProtocolSelector(
+                    selected = state.protocol,
+                    onSelect = vm::setProtocol,
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                )
             }
             item {
                 Field(state.endpoint, vm::setEndpoint, Res.string.label_endpoint, keyboardType = KeyboardType.Uri)
             }
-            if (state.isCustom) {
-                item {
-                    Field(state.modelsUrl, vm::setModelsUrl, Res.string.label_models_url, keyboardType = KeyboardType.Uri)
-                }
-            }
             item {
-                SecretField(
-                    value = state.apiKey,
-                    onValueChange = vm::setApiKey,
-                    label = if (state.apiKeyRequired) Res.string.label_api_key else Res.string.label_api_key_optional,
-                )
+                SecretField(value = state.apiKey, onValueChange = vm::setApiKey, label = Res.string.label_api_key)
             }
             item {
                 ModelField(
                     value = state.model,
-                    options = state.modelOptions,
+                    options = state.fetchedModels,
                     onValueChange = vm::setModel,
                     onOpen = vm::loadModels,
                 )
@@ -188,29 +166,6 @@ fun ProviderEditScreen(
                 TextButton(onClick = { confirmDelete = false }) { Text(stringResource(Res.string.action_cancel)) }
             },
         )
-    }
-}
-
-@Composable
-private fun PresetChips(selected: ProviderPreset?, onSelect: (ProviderPreset?) -> Unit) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        items(ProviderPresets.all, key = { it.id }) { preset ->
-            FilterChip(
-                selected = preset == selected,
-                onClick = { onSelect(preset) },
-                label = { Text(preset.name) },
-            )
-        }
-        item(key = "custom") {
-            FilterChip(
-                selected = selected == null,
-                onClick = { onSelect(null) },
-                label = { Text(stringResource(Res.string.preset_custom)) },
-            )
-        }
     }
 }
 

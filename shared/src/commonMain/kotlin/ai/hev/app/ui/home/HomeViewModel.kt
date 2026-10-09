@@ -116,7 +116,6 @@ class HomeViewModel(private val repo: HevRepository) : ViewModel() {
         val error = when {
             provider == null -> HomeError.NoProvider
             !Endpoints.isValid(provider.endpoint) -> HomeError.Provider(ProviderIssue.InvalidEndpoint)
-            provider.requiresApiKey && provider.apiKey.isBlank() -> HomeError.Provider(ProviderIssue.MissingApiKey)
             else -> state.draft.validate(state.capabilities)?.let(HomeError::Draft)
         }
         if (error != null || provider == null) {

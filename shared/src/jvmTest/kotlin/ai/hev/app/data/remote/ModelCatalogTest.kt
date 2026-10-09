@@ -6,7 +6,6 @@ import kotlinx.coroutines.test.runTest
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
@@ -49,29 +48,49 @@ class ModelCatalogTest {
     }
 
     @Test
-    fun `resolves models urls`() {
-        val endpoint = "http://192.168.1.5:11434/v1/systemone"
-        assertEquals("http://192.168.1.5:11434/api/tags", ModelCatalog.resolve("/api/tags", endpoint))
-        assertEquals("https://x.example/v1/models", ModelCatalog.resolve(" https://x.example/v1/models ", endpoint))
-        assertNull(ModelCatalog.resolve("", endpoint))
-        assertNull(ModelCatalog.resolve("/api/tags", "not a url"))
+    fun `models are listed next to the endpoint, then at ollama tags`() {
+        assertEquals(
+            listOf("https://api.typesafe.ai/v1/models", "https://api.typesafe.ai/api/tags"),
+            ModelCatalog.locations(" https://api.typesafe.ai/v1/systemone "),
+        )
+        assertEquals(
+            listOf("http://192.168.1.5:11434/v1/models", "http://192.168.1.5:11434/api/tags"),
+            ModelCatalog.locations("http://192.168.1.5:11434/v1/systemone?x=1"),
+        )
+        assertEquals(emptyList<String>(), ModelCatalog.locations("not a url"))
     }
 
     @Test
-    fun `fetches with auth from the resolved url`() = runTest {
+    fun `fetches with auth from the first location that answers`() = runTest {
         val server = MockWebServer()
+        server.enqueue(MockResponse(code = 404))
         server.enqueue(MockResponse(body = Fixtures.read("ollama/tags.json")))
         server.start()
         try {
-            val models = ModelCatalog().fetch("/api/tags", server.url("/v1/systemone").toString(), "k")
+            val models = ModelCatalog().fetch(server.url("/v1/systemone").toString(), "k")
 
             assertEquals(listOf("gemma4"), models)
-            val request = server.takeRequest()
-            assertEquals("GET", request.method)
-            assertEquals("/api/tags", request.target)
-            assertEquals("Bearer k", request.headers["Authorization"])
+            assertEquals("/v1/models", server.takeRequest().target)
+            val tags = server.takeRequest()
+            assertEquals("GET", tags.method)
+            assertEquals("/api/tags", tags.target)
+            assertEquals("Bearer k", tags.headers["Authorization"])
         } finally {
             server.close()
         }
+    }
+
+    @Test
+    fun `no model list means none`() = runTest {
+        val server = MockWebServer()
+        repeat(2) { server.enqueue(MockResponse(body = "<html></html>")) }
+        server.start()
+        try {
+            assertEquals(emptyList<String>(), ModelCatalog().fetch(server.url("/v1/systemone").toString(), ""))
+            assertEquals(2, server.requestCount)
+        } finally {
+            server.close()
+        }
+        assertEquals(emptyList<String>(), ModelCatalog().fetch("", ""))
     }
 }

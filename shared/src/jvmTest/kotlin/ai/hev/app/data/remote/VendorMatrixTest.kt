@@ -7,10 +7,10 @@ import ai.hev.app.domain.decision.DecisionOutcome
 import ai.hev.app.domain.decision.DecisionRequest
 import ai.hev.app.domain.decision.TokenUsage
 import ai.hev.app.domain.provider.DecisionProtocol
-import ai.hev.app.domain.provider.ProviderPreset
-import ai.hev.app.domain.provider.ProviderPresets
 import ai.hev.app.testing.Fixtures
 import ai.hev.app.testing.Requests
+import ai.hev.app.testing.Vendor
+import ai.hev.app.testing.Vendors
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -31,7 +31,7 @@ import org.junit.Test
 
 /**
  * Every documented vendor response and error body, sent through [DecisionClient] against each
- * preset's own path. Multi-question examples are narrowed to one answer, renamed to the question
+ * vendor's own path. Multi-question examples are narrowed to one answer, renamed to the question
  * name the client sends, the way the server would echo it.
  */
 class VendorMatrixTest {
@@ -42,7 +42,7 @@ class VendorMatrixTest {
     @After fun tearDown() = server.close()
 
     private data class AnswerCase(
-        val preset: ProviderPreset,
+        val vendor: Vendor,
         val fixture: String,
         val answer: String?,
         val kind: DecisionKind,
@@ -51,23 +51,23 @@ class VendorMatrixTest {
 
     private val answers = listOf(
         AnswerCase(
-            ProviderPresets.TypeSafe, "typesafe/response_choice.json", null, DecisionKind.Choice,
+            Vendors.TypeSafe, "typesafe/response_choice.json", null, DecisionKind.Choice,
             DecisionOutcome.Choice("billing", mapOf("billing" to 0.88, "technical" to 0.12, "sales" to 0.0), 0.81),
         ),
         AnswerCase(
-            ProviderPresets.TypeSafe, "typesafe/response_score.json", null, DecisionKind.Score,
+            Vendors.TypeSafe, "typesafe/response_score.json", null, DecisionKind.Score,
             DecisionOutcome.Score(1.05, mapOf(0 to 0.0, 1 to 0.95, 2 to 0.05), 0.92),
         ),
         AnswerCase(
-            ProviderPresets.TypeSafe, "typesafe/response_noul.json", null, DecisionKind.YesNo,
+            Vendors.TypeSafe, "typesafe/response_noul.json", null, DecisionKind.YesNo,
             DecisionOutcome.YesNo(0.95),
         ),
         AnswerCase(
-            ProviderPresets.Perplexity, "perplexity/response.json", "defect", DecisionKind.YesNo,
+            Vendors.Perplexity, "perplexity/response.json", "defect", DecisionKind.YesNo,
             DecisionOutcome.YesNo(0.9424522889347015),
         ),
         AnswerCase(
-            ProviderPresets.Perplexity, "perplexity/response.json", "sentiment", DecisionKind.Choice,
+            Vendors.Perplexity, "perplexity/response.json", "sentiment", DecisionKind.Choice,
             DecisionOutcome.Choice(
                 "mixed",
                 mapOf("positive" to 0.020649883775315993, "mixed" to 0.9503497962668123, "negative" to 0.02900031995787183),
@@ -75,7 +75,7 @@ class VendorMatrixTest {
             ),
         ),
         AnswerCase(
-            ProviderPresets.Perplexity, "perplexity/response.json", "severity", DecisionKind.Score,
+            Vendors.Perplexity, "perplexity/response.json", "severity", DecisionKind.Score,
             DecisionOutcome.Score(
                 1.7838686319784252,
                 mapOf(0 to 0.008423954913615923, 1 to 0.199283458194343, 2 to 0.7922925868920411),
@@ -83,27 +83,27 @@ class VendorMatrixTest {
             ),
         ),
         AnswerCase(
-            ProviderPresets.AlibabaBeijing, "alibaba/response.json", "department", DecisionKind.Choice,
+            Vendors.AlibabaBeijing, "alibaba/response.json", "department", DecisionKind.Choice,
             DecisionOutcome.Choice("billing", mapOf("billing" to 0.94, "technical" to 0.06), 0.88),
         ),
         AnswerCase(
-            ProviderPresets.AlibabaSingapore, "alibaba/response.json", "escalate", DecisionKind.YesNo,
+            Vendors.AlibabaSingapore, "alibaba/response.json", "escalate", DecisionKind.YesNo,
             DecisionOutcome.YesNo(0.99),
         ),
         AnswerCase(
-            ProviderPresets.AlibabaBeijing, "alibaba/response.json", "severity", DecisionKind.Score,
+            Vendors.AlibabaBeijing, "alibaba/response.json", "severity", DecisionKind.Score,
             DecisionOutcome.Score(2.25, mapOf(0 to 0.0, 1 to 0.01, 2 to 0.73, 3 to 0.26), 0.91),
         ),
         AnswerCase(
-            ProviderPresets.Ollama, "ollama/response_choice.json", null, DecisionKind.Choice,
+            Vendors.Ollama, "ollama/response_choice.json", null, DecisionKind.Choice,
             DecisionOutcome.Choice("bug", mapOf("billing" to 0.0125, "bug" to 0.9781, "account" to 0.0093), 0.8906),
         ),
         AnswerCase(
-            ProviderPresets.Ollama, "ollama/response_image.json", "has_ollama", DecisionKind.YesNo,
+            Vendors.Ollama, "ollama/response_image.json", "has_ollama", DecisionKind.YesNo,
             DecisionOutcome.YesNo(0.959),
         ),
         AnswerCase(
-            ProviderPresets.Ollama, "ollama/response_image.json", "app", DecisionKind.Choice,
+            Vendors.Ollama, "ollama/response_image.json", "app", DecisionKind.Choice,
             DecisionOutcome.Choice(
                 "vscode",
                 mapOf("vscode" to 0.966, "other" to 0.017, "browser" to 0.010, "terminal" to 0.007),
@@ -111,15 +111,15 @@ class VendorMatrixTest {
             ),
         ),
         AnswerCase(
-            ProviderPresets.VercelSystemOne, "vercel/typesafe_response.json", null, DecisionKind.YesNo,
+            Vendors.VercelSystemOne, "vercel/typesafe_response.json", null, DecisionKind.YesNo,
             DecisionOutcome.YesNo(0.98),
         ),
         AnswerCase(
-            ProviderPresets.OpenAi, "openai/response_predicate.json", null, DecisionKind.YesNo,
+            Vendors.OpenAi, "openai/response_predicate.json", null, DecisionKind.YesNo,
             DecisionOutcome.YesNo(0.92),
         ),
         AnswerCase(
-            ProviderPresets.OpenAi, "openai/response_choice.json", null, DecisionKind.Choice,
+            Vendors.OpenAi, "openai/response_choice.json", null, DecisionKind.Choice,
             DecisionOutcome.Choice(
                 "billing",
                 mapOf("billing" to 0.95, "technical" to 0.02, "shipping" to 0.01, "other" to 0.02),
@@ -127,38 +127,38 @@ class VendorMatrixTest {
             ),
         ),
         AnswerCase(
-            ProviderPresets.OpenAi, "openai/response_score.json", null, DecisionKind.Score,
+            Vendors.OpenAi, "openai/response_score.json", null, DecisionKind.Score,
             DecisionOutcome.Score(1.1, mapOf(0 to 0.1, 1 to 0.7, 2 to 0.2), 0.55),
         ),
         AnswerCase(
-            ProviderPresets.VercelDecisions, "vercel/decisions_response.json", "damaged", DecisionKind.YesNo,
+            Vendors.VercelDecisions, "vercel/decisions_response.json", "damaged", DecisionKind.YesNo,
             DecisionOutcome.YesNo(0.95),
         ),
         AnswerCase(
-            ProviderPresets.VercelDecisions, "vercel/decisions_response.json", "queue", DecisionKind.Choice,
+            Vendors.VercelDecisions, "vercel/decisions_response.json", "queue", DecisionKind.Choice,
             DecisionOutcome.Choice("shipping", mapOf("billing" to 0.19, "shipping" to 0.81), 0.81),
         ),
         AnswerCase(
-            ProviderPresets.VercelDecisions, "vercel/decisions_response.json", "urgency", DecisionKind.Score,
+            Vendors.VercelDecisions, "vercel/decisions_response.json", "urgency", DecisionKind.Score,
             DecisionOutcome.Score(1.3, mapOf(0 to 0.08, 1 to 0.54, 2 to 0.38), 0.62),
         ),
     )
 
     @Test
-    fun `documented answers decode for every preset`() = runTest {
+    fun `documented answers decode for every vendor`() = runTest {
         answers.forEach { case ->
-            val label = "${case.preset.id} ${case.fixture} ${case.answer ?: ""}"
-            server.enqueue(MockResponse(body = narrowed(case.preset.protocol, Fixtures.read(case.fixture), case.answer)))
-            val request = request(case.kind, case.preset.models.first())
-            val apiKey = if (case.preset.apiKeyRequired) "test-key" else ""
+            val label = "${case.vendor.id} ${case.fixture} ${case.answer ?: ""}"
+            server.enqueue(MockResponse(body = narrowed(case.vendor.protocol, Fixtures.read(case.fixture), case.answer)))
+            val request = request(case.kind, case.vendor.model)
+            val apiKey = if (case.vendor.apiKeyRequired) "test-key" else ""
 
-            val result = client.decide(case.preset.protocol, urlFor(case.preset), apiKey, request)
+            val result = client.decide(case.vendor.protocol, urlFor(case.vendor), apiKey, request)
 
             assertEquals(label, case.expected, result.outcome)
             val recorded = server.takeRequest()
-            assertEquals(label, pathOf(case.preset), recorded.target)
+            assertEquals(label, pathOf(case.vendor), recorded.target)
             assertEquals(label, if (apiKey.isEmpty()) null else "Bearer test-key", recorded.headers["Authorization"])
-            assertSentQuestion(case.preset.protocol, case.kind, case.preset.models.first(), recorded.body!!.utf8(), label)
+            assertSentQuestion(case.vendor.protocol, case.kind, case.vendor.model, recorded.body!!.utf8(), label)
         }
     }
 
@@ -168,10 +168,10 @@ class VendorMatrixTest {
         server.enqueue(MockResponse(body = narrowed(DecisionProtocol.SystemOne, Fixtures.read("alibaba/response.json"), "escalate")))
 
         val perplexity = client.decide(
-            DecisionProtocol.SystemOne, urlFor(ProviderPresets.Perplexity), "k", Requests.yesNo("pplx-decider-v1.1-27b"),
+            DecisionProtocol.SystemOne, urlFor(Vendors.Perplexity), "k", Requests.yesNo("pplx-decider-v1.1-27b"),
         )
         val alibaba = client.decide(
-            DecisionProtocol.SystemOne, urlFor(ProviderPresets.AlibabaBeijing), "k", Requests.yesNo("decision-model-preview"),
+            DecisionProtocol.SystemOne, urlFor(Vendors.AlibabaBeijing), "k", Requests.yesNo("decision-model-preview"),
         )
 
         assertEquals("pplx-decider-v1.1-27b", perplexity.model)
@@ -186,14 +186,14 @@ class VendorMatrixTest {
         server.enqueue(MockResponse(body = """{"answers": [{"type": "refusal", "name": "decision"}]}"""))
 
         val result = client.decide(
-            DecisionProtocol.OpenAiDecisions, urlFor(ProviderPresets.OpenAi), "k", Requests.choice("gpt-6-luna"),
+            DecisionProtocol.OpenAiDecisions, urlFor(Vendors.OpenAi), "k", Requests.choice("gpt-6-luna"),
         )
 
         assertEquals(DecisionOutcome.Refused, result.outcome)
     }
 
     private data class ErrorCase(
-        val preset: ProviderPreset,
+        val vendor: Vendor,
         val status: Int,
         val body: String,
         val expected: Class<out DecisionError.Http>,
@@ -202,49 +202,49 @@ class VendorMatrixTest {
 
     private val errors = listOf(
         ErrorCase(
-            ProviderPresets.VercelDecisions, 400, Fixtures.read("vercel/decisions_error.json"),
+            Vendors.VercelDecisions, 400, Fixtures.read("vercel/decisions_error.json"),
             DecisionError.InvalidRequest::class.java,
             "Image input isn't supported on AI Gateway's Decisions API yet. Send text input.",
         ),
         ErrorCase(
-            ProviderPresets.VercelSystemOne, 400, Fixtures.read("vercel/typesafe_error.json"),
+            Vendors.VercelSystemOne, 400, Fixtures.read("vercel/typesafe_error.json"),
             DecisionError.InvalidRequest::class.java,
             "questions.refund.type: expected one of 'noul', 'choice', 'score'",
         ),
         ErrorCase(
-            ProviderPresets.Perplexity, 400, Fixtures.read("perplexity/error_noul.json"),
+            Vendors.Perplexity, 400, Fixtures.read("perplexity/error_noul.json"),
             DecisionError.InvalidRequest::class.java,
             "Noul question must have criteria or instructions",
         ),
         ErrorCase(
-            ProviderPresets.Perplexity, 400, Fixtures.read("perplexity/error_invalid_model.json"),
+            Vendors.Perplexity, 400, Fixtures.read("perplexity/error_invalid_model.json"),
             DecisionError.InvalidRequest::class.java,
             "Invalid model 'pplx-decider-v1.1-27b-latest'. Permitted models can be found in the documentation at " +
                 "https://docs.perplexity.ai/docs/getting-started/models.",
         ),
         ErrorCase(
-            ProviderPresets.Perplexity, 401, Fixtures.read("perplexity/error_invalid_api_key.json"),
+            Vendors.Perplexity, 401, Fixtures.read("perplexity/error_invalid_api_key.json"),
             DecisionError.Unauthorized::class.java,
             "Invalid API key provided. You can find your API key at https://console.perplexity.ai.",
         ),
         ErrorCase(
-            ProviderPresets.Perplexity, 404, "",
+            Vendors.Perplexity, 404, "",
             DecisionError.InvalidRequest::class.java,
             "Client Error",
         ),
         // Perplexity documents that a 504 body may be an HTML page; this one is illustrative.
         ErrorCase(
-            ProviderPresets.Perplexity, 504, "<html><body><h1>504 Gateway Time-out</h1></body></html>",
+            Vendors.Perplexity, 504, "<html><body><h1>504 Gateway Time-out</h1></body></html>",
             DecisionError.GatewayTimeout::class.java,
             "<html><body><h1>504 Gateway Time-out</h1></body></html>",
         ),
         ErrorCase(
-            ProviderPresets.Ollama, 413, Fixtures.read("ollama/error_too_large.json"),
+            Vendors.Ollama, 413, Fixtures.read("ollama/error_too_large.json"),
             DecisionError.InvalidRequest::class.java,
             "request body must not exceed 64 KiB without images",
         ),
         ErrorCase(
-            ProviderPresets.DeepInfra, 422, Fixtures.read("deepinfra/error_validation.json"),
+            Vendors.DeepInfra, 422, Fixtures.read("deepinfra/error_validation.json"),
             DecisionError.InvalidRequest::class.java,
             "body.questions.decision.criteria: Dictionary should have at most 52 items after validation, not 60",
         ),
@@ -255,11 +255,11 @@ class VendorMatrixTest {
         errors.forEach { case ->
             server.enqueue(MockResponse(code = case.status, body = case.body))
 
-            val error = decideExpectingError(case.preset)
+            val error = decideExpectingError(case.vendor)
 
-            assertEquals(case.preset.id, case.expected, error.javaClass)
-            assertEquals(case.preset.id, case.status, error.status)
-            assertEquals(case.preset.id, case.detail, error.detail)
+            assertEquals(case.vendor.id, case.expected, error.javaClass)
+            assertEquals(case.vendor.id, case.status, error.status)
+            assertEquals(case.vendor.id, case.detail, error.detail)
         }
         assertEquals(errors.size, server.requestCount)
     }
@@ -276,7 +276,7 @@ class VendorMatrixTest {
             )
         }
 
-        val error = decideExpectingError(ProviderPresets.Perplexity)
+        val error = decideExpectingError(Vendors.Perplexity)
 
         assertTrue(error is DecisionError.RateLimited)
         assertEquals(2L, (error as DecisionError.RateLimited).retryAfterSeconds)
@@ -290,20 +290,20 @@ class VendorMatrixTest {
         server.enqueue(MockResponse(body = Fixtures.read("typesafe/response_noul.json")))
 
         val result = client.decide(
-            DecisionProtocol.SystemOne, urlFor(ProviderPresets.TypeSafe), "k", Requests.yesNo("jev-latest"),
+            DecisionProtocol.SystemOne, urlFor(Vendors.TypeSafe), "k", Requests.yesNo("jev-latest"),
         )
 
         assertEquals(DecisionOutcome.YesNo(0.95), result.outcome)
         assertEquals(2, server.requestCount)
     }
 
-    private suspend fun decideExpectingError(preset: ProviderPreset): DecisionError.Http {
+    private suspend fun decideExpectingError(vendor: Vendor): DecisionError.Http {
         try {
-            client.decide(preset.protocol, urlFor(preset), "k", request(DecisionKind.Choice, preset.models.first()))
+            client.decide(vendor.protocol, urlFor(vendor), "k", request(DecisionKind.Choice, vendor.model))
         } catch (e: DecisionError.Http) {
             return e
         }
-        fail("Expected an HTTP error for ${preset.id}")
+        fail("Expected an HTTP error for ${vendor.id}")
         throw AssertionError()
     }
 
@@ -313,10 +313,10 @@ class VendorMatrixTest {
         DecisionKind.YesNo -> Requests.yesNo(model)
     }
 
-    /** The preset's path and query, served by the mock server. */
-    private fun pathOf(preset: ProviderPreset): String = "/" + preset.endpoint.substringAfter("://").substringAfter('/')
+    /** The vendor's path and query, served by the mock server. */
+    private fun pathOf(vendor: Vendor): String = "/" + vendor.endpoint.substringAfter("://").substringAfter('/')
 
-    private fun urlFor(preset: ProviderPreset): String = server.url(pathOf(preset)).toString()
+    private fun urlFor(vendor: Vendor): String = server.url(pathOf(vendor)).toString()
 
     private fun assertSentQuestion(protocol: DecisionProtocol, kind: DecisionKind, model: String, body: String, label: String) {
         val json = Json.parseToJsonElement(body).jsonObject
