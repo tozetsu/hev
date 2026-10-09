@@ -113,6 +113,8 @@ val appImageDir = tasks.register<Sync>("appImageDir") {
     from("appimage")
     from("src/main/composeResources/drawable/hev.png")
     into(layout.buildDirectory.dir("appimage/hev.AppDir"))
+    // The JDK's legal notices are read-only and cannot be copied over, so each build starts afresh.
+    doFirst { destinationDir.deleteRecursively() }
 }
 
 tasks.register<AppImage>("packageAppImage") {
